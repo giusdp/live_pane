@@ -1,0 +1,10 @@
+{
+  "type": "module",
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "phoenix_live_view": "file:../deps/phoenix_live_view"
+  },
+  "scripts": {
+    "biome": "biome format --write ."
+  }
+}
