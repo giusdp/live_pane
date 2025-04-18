@@ -1,4 +1,4 @@
-# LiveviewPanels
+# Live Pane
 
 To start your Phoenix server:
 

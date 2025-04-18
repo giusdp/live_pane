@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full [scrollbar-gutter:stable]">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <.live_title suffix=" · Phoenix Framework">
+      {assigns[:page_title] || "Live Pane"}
+    </.live_title>
+    <link rel="icon" href="" />
+    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
+    <script phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
+    </script>
+    
+<!-- meta description -->
+    <meta
+      name="description"
+      content="LivePane is a simple and easy to use set of components to make resizable panels in LiveView."
+    />
+    <!-- og image -->
+    <meta property="og:image" content="" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Live Pane" />
+    <meta property="og:url" content="https://github.com/giusdp/live_pane" />
+    <meta
+      property="og:description"
+      content="LivePane is a simple and easy to use set of components to make resizable panels in LiveView."
+    />
+  </head>
+  <body class="h-full flex flex-col bg-white antialiased">
+    {@inner_content}
+    <footer class="mt-10 px-10 py-6 flex gap-4">
+      <.link href="https://github.com/giusdp/live_pane" class="text-zinc-700 text-xs">
+        github
+      </.link>
+      <.link href="https://hex.pm/packages/live_pane" class="text-zinc-700 text-xs">hex</.link>
+      <.link href="https://hexdocs.pm/live_pane/readme.html" class="text-zinc-700 text-xs">
+        docs
+      </.link>
+      <span class="grow text-right text-zinc-700 text-xs">
+        made by
+        <.link href="https://giusdp.github.io" class="text-rose-500 hover:text-rose-400">
+          giusdp
+        </.link>
+      </span>
+    </footer>
+  </body>
+</html>

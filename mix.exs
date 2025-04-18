@@ -7,7 +7,7 @@ defmodule LivePane.MixProject do
     [
       app: :live_pane,
       version: @version,
-      elixir: "~> 1.17",
+      elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
@@ -51,8 +51,7 @@ defmodule LivePane.MixProject do
       licenses: ["MIT"],
       links: %{
         Changelog: "https://hexdocs.pm/live_pane/changelog.html",
-        GitHub: "https://github.com/giusdp/live_pane",
-        Sponsor: "https://github.com/sponsors/giusdp"
+        GitHub: "https://github.com/giusdp/live_pane"
       },
       files: files()
     ]

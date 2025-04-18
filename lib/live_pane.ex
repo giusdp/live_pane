@@ -1,4 +1,4 @@
-defmodule LivePanels do
+defmodule LivePane do
   @moduledoc """
   LiveComponents for resizable panels.
   """
