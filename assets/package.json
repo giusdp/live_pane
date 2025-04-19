@@ -1,10 +1,12 @@
 {
   "type": "module",
   "devDependencies": {
+    "@ava/typescript": "^5.0.0",
     "@biomejs/biome": "1.9.4",
     "@types/phoenix_live_view": "^1.0.0",
     "ava": "^6.2.0",
     "phoenix_live_view": "file:../deps/phoenix_live_view",
+    "tsimp": "^2.0.12",
     "typescript": "^5.8.3"
   },
   "scripts": {

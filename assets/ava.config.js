@@ -1,6 +1,9 @@
 export default {
-    extensions: {
-        js: true,
-        ts: 'module'
+    typescript: {
+        rewritePaths: {
+            "src/": "build/"
+        },
+        compile: false
     },
+    nodeArguments: ['--import=tsimp/import']
 }
