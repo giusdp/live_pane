@@ -35,33 +35,6 @@ defmodule DemoWeb.HomeLive do
           </svg>
           <span class="sr-only">GitHub</span><span class="sr-only select-none"> (opens in a new tab)</span>
         </a>
-        <button
-          type="button"
-          aria-label="Menu"
-          class="-mr-2 rounded p-2 active:bg-gray-400/20 md:hidden"
-          phx-click={
-            JS.toggle_class(
-              "max-md:block",
-              to: "aside#main-navigation"
-            )
-            |> JS.toggle_class(
-              "max-md:block",
-              to: "#backdrop"
-            )
-          }
-        >
-          <svg fill="none" width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" class="">
-            <g>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16">
-              </path>
-            </g>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12h16"></path>
-            <g>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 18h16">
-              </path>
-            </g>
-          </svg>
-        </button>
       </nav>
     </div>
     """

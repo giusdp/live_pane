@@ -7,7 +7,6 @@ defmodule LivePane do
   """
   use Phoenix.Component
 
-  # PaneGroup function component
   attr :id, :string, required: true
   attr :rest, :global
   slot :inner_block, required: true
@@ -15,6 +14,19 @@ defmodule LivePane do
   def group(assigns) do
     ~H"""
     <.live_component module={LivePane.Group} id={@id} {@rest}>
+      {render_slot(@inner_block)}
+    </.live_component>
+    """
+  end
+
+  attr :id, :string, required: true
+  attr :group_id, :string, required: true
+  attr :rest, :global
+  slot :inner_block, required: true
+
+  def pane(assigns) do
+    ~H"""
+    <.live_component module={LivePane.Pane} group_id={@group_id} id={@id} {@rest}>
       {render_slot(@inner_block)}
     </.live_component>
     """

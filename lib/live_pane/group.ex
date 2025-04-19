@@ -12,7 +12,7 @@ defmodule LivePane.Group do
   @impl true
   def render(assigns) do
     ~H"""
-    <div id={@id} phx-update="ignore" phx-hook="PaneGroup">
+    <div id={@id} phx-update="ignore" phx-hook="live_pane_group">
       {render_slot(@inner_block)}
     </div>
     """
