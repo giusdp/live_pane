@@ -3,10 +3,12 @@
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@types/phoenix_live_view": "^1.0.0",
+    "ava": "^6.2.0",
     "phoenix_live_view": "file:../deps/phoenix_live_view",
     "typescript": "^5.8.3"
   },
   "scripts": {
-    "biome": "biome format --write ./js/live_pane/"
+    "biome": "biome format --write ./js/live_pane/",
+    "test": "ava"
   }
 }
