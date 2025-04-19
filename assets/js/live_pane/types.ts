@@ -16,16 +16,17 @@ export type PaneGroupData = {
 export type Direction = 'horizontal' | 'vertical';
 
 export type PaneConstraints = {
-  collapsedSize?: number | undefined;
-  collapsible?: boolean | undefined;
-  defaultSize?: number | undefined;
-  maxSize?: number | undefined;
-  minSize?: number | undefined;
+  collapsedSize: number;
+  collapsible: boolean;
+  defaultSize?: number;
+  maxSize: number;
+  minSize: number;
 };
 
 export type PaneData = {
   id: string;
   order: number;
+  constraints: PaneConstraints;
 };
 
 export type DragState = {
@@ -35,7 +36,7 @@ export type DragState = {
   initialLayout: number[];
 };
 
-export type ResizeEvent = KeyboardEvent | MouseEvent | TouchEvent;
+export type ResizeEvent = MouseEvent;
 export type ResizeHandler = (event: ResizeEvent) => void;
 
 export type PaneResizeHandleOnDragging = (isDragging: boolean) => void;
