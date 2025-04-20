@@ -6,14 +6,29 @@ export type PaneGroupData = {
   props: {
     paneDataArray: Writable<PaneData[]>;
     paneDataArrayChanged: Writable<boolean>;
+    direction: Writable<Direction>;
+    dragState: Writable<DragState | null>;
+    // TODO: does groupId need to be writable?
+    groupId: Writable<string>;
+    dragHandleId: string;
+    layout: Writable<number[]>;
+    prevDelta: Writable<number>;
   };
   methods: {
     registerPane: (paneData: PaneData) => void;
     unregisterPane: (paneData: PaneId) => void;
+    registerResizeHandler: (handleId: string, event: ResizeEvent) => void;
   };
 };
 
 export type Direction = 'horizontal' | 'vertical';
+
+export type DragState = {
+  dragHandleId: string;
+  dragHandleRect: DOMRect;
+  initialCursorPosition: number;
+  initialLayout: number[];
+};
 
 export type PaneConstraints = {
   collapsedSize: number;
@@ -27,13 +42,6 @@ export type PaneData = {
   id: string;
   order: number;
   constraints: PaneConstraints;
-};
-
-export type DragState = {
-  dragHandleId: string;
-  dragHandleRect: DOMRect;
-  initialCursorPosition: number;
-  initialLayout: number[];
 };
 
 export type ResizeEvent = MouseEvent;
