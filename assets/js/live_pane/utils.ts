@@ -1,4 +1,4 @@
-import { Writable } from './store';
+import type { ResizeEvent } from './types';
 
 export function noop() {}
 
@@ -26,12 +26,10 @@ export function subscribe(store: any, ...callbacks: ((_: any) => any)[]) {
   return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
 
-export function get_store_value<T>(store: Writable<T>): T {
-  let value: any;
-  subscribe(store, _ => (value = _))();
-  return value;
-}
-
 export function isHTMLElement(element: unknown): element is HTMLElement {
   return element instanceof HTMLElement;
+}
+
+export function isMouseEvent(event: ResizeEvent): event is MouseEvent {
+  return event.type.startsWith('mouse');
 }

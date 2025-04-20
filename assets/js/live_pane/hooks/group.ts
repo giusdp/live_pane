@@ -1,7 +1,12 @@
 import { Hook } from 'phoenix_live_view';
-import { get, writable, Writable } from '../store';
-import { PaneData, PaneGroupData } from '../types';
-import { paneGroupInstances, registerPaneFn, unregisterPaneFn } from '../core';
+import { writable } from '../store';
+import type { Direction, PaneData, PaneGroupData, DragState } from '../types';
+import {
+  paneGroupInstances,
+  registerPaneFn,
+  registerResizeHandlerFn,
+  unregisterPaneFn
+} from '../core';
 
 export function createGroupHook() {
   let groupHook: Hook = {
@@ -9,20 +14,50 @@ export function createGroupHook() {
       const paneDataArray = writable<PaneData[]>([]);
       const paneDataArrayChanged = writable(false);
 
+      const direction = writable<Direction>('horizontal');
+      const dragState = writable<DragState | null>(null);
+      const groupId = writable<string>(this.el.id);
+      const layout = writable<number[]>([]);
+      const prevDelta = writable<number>(0);
+      const dragHandleId = this.el.getAttribute('data-drag-handle-id') || '';
+
       if (paneGroupInstances.has(this.el.id)) {
         throw Error('Group Pane with id ' + this.el.id + ' already exists.');
       }
 
+      const registerPane = registerPaneFn(paneDataArray, paneDataArrayChanged);
+      const unregisterPane = unregisterPaneFn(
+        paneDataArray,
+        paneDataArrayChanged
+      );
+      const registerResizeHandler = registerResizeHandlerFn(
+        direction,
+        dragState,
+        groupId,
+        layout,
+        paneDataArray,
+        prevDelta,
+        dragHandleId
+      );
+
       const groupData: PaneGroupData = {
         props: {
           paneDataArray,
-          paneDataArrayChanged
+          paneDataArrayChanged,
+          direction,
+          dragState,
+          groupId,
+          dragHandleId,
+          layout,
+          prevDelta
         },
         methods: {
-          registerPane: registerPaneFn(paneDataArray, paneDataArrayChanged),
-          unregisterPane: unregisterPaneFn(paneDataArray, paneDataArrayChanged)
+          registerPane,
+          unregisterPane,
+          registerResizeHandler
         }
       };
+
       paneGroupInstances.set(this.el.id, groupData);
 
       console.log('mounted pane group', this.el.id);
