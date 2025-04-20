@@ -4,7 +4,9 @@ import type { Direction, PaneData, PaneGroupData, DragState } from '../types';
 import {
   paneGroupInstances,
   registerPaneFn,
-  registerResizeHandlerFn,
+  resizeHandlerFn,
+  startDraggingFn,
+  stopDraggingFn,
   unregisterPaneFn
 } from '../core';
 
@@ -15,7 +17,6 @@ export function createGroupHook() {
       const paneDataArrayChanged = writable(false);
 
       const direction = writable<Direction>('horizontal');
-      const dragState = writable<DragState | null>(null);
       const groupId = writable<string>(this.el.id);
       const layout = writable<number[]>([]);
       const prevDelta = writable<number>(0);
@@ -30,21 +31,22 @@ export function createGroupHook() {
         paneDataArray,
         paneDataArrayChanged
       );
-      const registerResizeHandler = registerResizeHandlerFn(
+      const resizeHandler = resizeHandlerFn(
         direction,
-        dragState,
         groupId,
         layout,
         paneDataArray,
         prevDelta
       );
 
+      const startDragging = startDraggingFn(direction, layout);
+      const stopDragging = stopDraggingFn();
+
       const groupData: PaneGroupData = {
         props: {
           paneDataArray,
           paneDataArrayChanged,
           direction,
-          dragState,
           groupId,
           dragHandleId,
           layout,
@@ -53,7 +55,9 @@ export function createGroupHook() {
         methods: {
           registerPane,
           unregisterPane,
-          registerResizeHandler
+          resizeHandler,
+          startDragging,
+          stopDragging
         }
       };
 

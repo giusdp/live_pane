@@ -1,7 +1,7 @@
 import { adjustLayoutByDelta } from './adjust-layout';
 import { areArraysEqual } from './compare';
 import { Writable } from './store';
-import { setGlobalCursorStyle } from './style';
+import { resetGlobalCursorStyle, setGlobalCursorStyle } from './style';
 import {
   Direction,
   DragState,
@@ -59,28 +59,34 @@ export function unregisterPaneFn(
   };
 }
 
-export function registerResizeHandlerFn(
+export function resizeHandlerFn(
   direction: Writable<Direction>,
-  dragState: Writable<DragState | null>,
   groupId: Writable<GroupId>,
   layout: Writable<number[]>,
   paneDataArray: Writable<PaneData[]>,
   prevDelta: Writable<number>
 ) {
-  return function resizeHandler(dragHandleId: string, event: ResizeEvent) {
+  return function resizeHandler(
+    dragHandleId: string,
+    initialLayout: number[] | null,
+    initialCursorPosition: number | null,
+    event: ResizeEvent
+  ) {
     event.preventDefault();
 
     const $direction = direction.get();
-    const $dragState = dragState.get();
     const $groupId = groupId.get();
     const $prevLayout = layout.get();
     const $paneDataArray = paneDataArray.get();
 
-    const { initialLayout } = $dragState ?? {};
-
     const pivotIndices = getPivotIndices($groupId, dragHandleId);
 
-    let delta = getDeltaPercentage(event, dragHandleId, $direction, $dragState);
+    let delta = getDeltaPercentage(
+      event,
+      dragHandleId,
+      $direction,
+      initialCursorPosition
+    );
     if (delta === 0) return;
 
     // support RTL
@@ -132,6 +138,36 @@ export function registerResizeHandlerFn(
     if (layoutChanged) {
       layout.set(nextLayout);
     }
+  };
+}
+
+export function startDraggingFn(
+  direction: Writable<Direction>,
+  layout: Writable<number[]>
+) {
+  return (dragHandleId: string, event: ResizeEvent) => {
+    const $direction = direction.get();
+    const $layout = layout.get();
+    const handleElement = getResizeHandleElement(dragHandleId);
+    assert(handleElement);
+
+    const initialCursorPosition = getResizeEventCursorPosition(
+      $direction,
+      event
+    );
+
+    return {
+      dragHandleId,
+      dragHandleRect: handleElement.getBoundingClientRect(),
+      initialCursorPosition,
+      initialLayout: $layout
+    } satisfies DragState;
+  };
+}
+
+export function stopDraggingFn() {
+  return () => {
+    resetGlobalCursorStyle();
   };
 }
 
@@ -191,9 +227,9 @@ function getDeltaPercentage(
   e: ResizeEvent,
   dragHandleId: string,
   dir: Direction,
-  initialDragState: DragState | null
+  initialCursorPosition: number | null
 ): number {
-  if (initialDragState == null) return 0;
+  if (initialCursorPosition == null) return 0;
 
   const isHorizontal = dir === 'horizontal';
 
@@ -202,8 +238,6 @@ function getDeltaPercentage(
 
   const groupId = handleElement.getAttribute('data-pane-group-id');
   assert(groupId);
-
-  const { initialCursorPosition } = initialDragState;
 
   const cursorPosition = getResizeEventCursorPosition(dir, e);
 
