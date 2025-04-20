@@ -36,8 +36,7 @@ export function createGroupHook() {
         groupId,
         layout,
         paneDataArray,
-        prevDelta,
-        dragHandleId
+        prevDelta
       );
 
       const groupData: PaneGroupData = {

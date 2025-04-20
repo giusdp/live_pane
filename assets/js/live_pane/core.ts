@@ -65,10 +65,9 @@ export function registerResizeHandlerFn(
   groupId: Writable<GroupId>,
   layout: Writable<number[]>,
   paneDataArray: Writable<PaneData[]>,
-  prevDelta: Writable<number>,
-  dragHandleId: string
+  prevDelta: Writable<number>
 ) {
-  return function resizeHandler(event: ResizeEvent) {
+  return function resizeHandler(dragHandleId: string, event: ResizeEvent) {
     event.preventDefault();
 
     const $direction = direction.get();

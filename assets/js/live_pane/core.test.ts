@@ -97,7 +97,7 @@ test('registerResizeHandlerFn updates layout on resize', t => {
 
   // Simulate a MouseEvent
   const event = {
-    preventDefault: () => { },
+    preventDefault: () => {},
     clientX: 60, // initial cursor position was 50, moved by 10 right
     type: 'mousemove'
   } as unknown as ResizeEvent;
@@ -108,11 +108,10 @@ test('registerResizeHandlerFn updates layout on resize', t => {
     groupId,
     layout,
     paneDataArray,
-    prevDelta,
-    dragHandleId
+    prevDelta
   );
 
-  resizeHandler(event);
+  resizeHandler(dragHandleId, event);
 
   t.deepEqual(layout.get(), [60, 40]);
 
