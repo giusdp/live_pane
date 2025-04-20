@@ -5,10 +5,11 @@ import { LiveSocket } from "phoenix_live_view"
 
 import { createLivePaneHooks } from '../../../assets/js/live_pane';
 
-const { groupHook, paneHook } = createLivePaneHooks()
+const { groupHook, paneHook, resizerHook } = createLivePaneHooks()
 let Hooks = {}
 Hooks.live_pane_group = groupHook;
 Hooks.live_pane = paneHook;
+Hooks.live_pane_resizer = resizerHook;
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {

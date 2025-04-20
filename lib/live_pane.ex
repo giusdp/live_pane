@@ -31,4 +31,17 @@ defmodule LivePane do
     </.live_component>
     """
   end
+
+  attr :id, :string, required: true
+  attr :group_id, :string, required: true
+  attr :rest, :global
+  slot :inner_block
+
+  def resizer(assigns) do
+    ~H"""
+    <.live_component module={LivePane.Resizer} group_id={@group_id} id={@id} {@rest}>
+      {render_slot(@inner_block)}
+    </.live_component>
+    """
+  end
 end
