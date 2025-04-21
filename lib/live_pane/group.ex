@@ -9,6 +9,7 @@ defmodule LivePane.Group do
     {:ok, assign(socket, assigns)}
   end
 
+  # TODO: set direction here and keep in sync with hook (direction determines flex direction)
   @impl true
   def render(assigns) do
     ~H"""
@@ -18,6 +19,7 @@ defmodule LivePane.Group do
       data-pane-group-id={@id}
       phx-update="ignore"
       phx-hook="live_pane_group"
+      class={["flex flex-row h-full w-full overflow-hidden"]}
     >
       {render_slot(@inner_block)}
     </div>

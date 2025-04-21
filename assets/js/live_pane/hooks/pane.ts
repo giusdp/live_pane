@@ -23,7 +23,14 @@ export function createPaneHook() {
 
       const paneData: PaneData = {
         id: this.el.id,
-        order
+        order,
+        constraints: {
+          collapsedSize: 0, // TODO constraints should be passed in as props optionally
+          collapsible: false,
+          defaultSize: undefined,
+          maxSize: 100,
+          minSize: 0
+        }
       };
 
       groupData?.methods.registerPane(paneData);

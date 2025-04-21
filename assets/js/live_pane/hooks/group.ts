@@ -2,6 +2,7 @@ import { Hook } from 'phoenix_live_view';
 import { writable } from '../store';
 import type { Direction, PaneData, PaneGroupData, DragState } from '../types';
 import {
+  setupOnPaneDataChange,
   paneGroupInstances,
   registerPaneFn,
   resizeHandlerFn,
@@ -11,6 +12,7 @@ import {
 } from '../core';
 
 export function createGroupHook() {
+  let unsubFromPaneDataChange = () => { };
   let groupHook: Hook = {
     mounted() {
       const paneDataArray = writable<PaneData[]>([]);
@@ -65,6 +67,15 @@ export function createGroupHook() {
 
       console.log('mounted pane group', this.el.id);
       paneDataArray.subscribe(v => console.log(JSON.stringify(v)));
+      unsubFromPaneDataChange = setupOnPaneDataChange(
+        layout,
+        paneDataArray,
+        paneDataArrayChanged
+      );
+    },
+
+    destroyed() {
+      unsubFromPaneDataChange();
     }
   };
 
@@ -79,23 +90,9 @@ export function createGroupHook() {
 //     getPaneStyle,
 //     isCollapsed: isPaneCollapsed,
 //     isExpanded: isPaneExpanded,
-//     registerPane,
-//     registerResizeHandle,
 //     resizePane,
-//     startDragging,
-//     stopDragging,
-//     unregisterPane,
 //     setLayout,
 //     getLayout,
 //   },
-//   states: {
-//     direction,
-//     dragState,
-//     groupId,
-//     paneGroupAttrs,
-//     paneGroupSelectors,
-//     paneGroupStyle,
-//     layout,
-//   },
-//   options,
+
 // };
