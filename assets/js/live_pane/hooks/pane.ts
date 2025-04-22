@@ -1,5 +1,5 @@
 import { Hook } from 'phoenix_live_view';
-import { findPaneDataIndex, paneGroupInstances } from '../core';
+import { paneGroupInstances } from '../core';
 import { PaneData, PaneId } from '../types';
 import { Writable } from '../store';
 
@@ -96,4 +96,10 @@ function unregisterPane(
     paneDataArrayChanged.set(true);
     return curr;
   });
+}
+
+function findPaneDataIndex(paneDataArray: PaneData[], paneDataId: PaneId) {
+  return paneDataArray.findIndex(
+    prevPaneData => prevPaneData.id === paneDataId
+  );
 }

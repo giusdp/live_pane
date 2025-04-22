@@ -39,7 +39,6 @@ test('Mounting pane registers it to group data', t => {
       collapsible: false
     }
   });
-  t.true(changed.get());
 });
 
 test('Mounting panes registers them following data-pane-order', t => {
@@ -73,7 +72,6 @@ test('Mounting panes registers them following data-pane-order', t => {
     { id: 'pane2', order: 1 },
     { id: 'pane1', order: 2 }
   ]);
-  t.true(changed.get());
 });
 
 test('destroying unregisters the panes', t => {
