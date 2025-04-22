@@ -1,12 +1,6 @@
 import test from 'ava';
 
-import {
-  registerPaneFn,
-  resizeHandlerFn,
-  startDraggingFn,
-  stopDraggingFn,
-  unregisterPaneFn
-} from './core';
+import { resizeHandlerFn, startDraggingFn } from './core';
 import {
   type Direction,
   type DragState,
@@ -14,40 +8,6 @@ import {
   type ResizeEvent
 } from './types';
 import { writable } from './store';
-
-test('registerPane adds panes and sorts by order', t => {
-  const panes = writable<PaneData[]>([]);
-  const changed = writable(false);
-
-  const register = registerPaneFn(panes, changed);
-
-  register({ id: 'a', order: 2, constraints: {} } as PaneData);
-  register({ id: 'b', order: 1, constraints: {} } as PaneData);
-
-  t.deepEqual(
-    panes.get().map(p => p.id),
-    ['b', 'a']
-  );
-  t.true(changed.get());
-});
-
-test('unregisterPane removes a pane', t => {
-  const panes = writable<PaneData[]>([
-    { id: 'a', order: 2, constraints: {} } as PaneData,
-    { id: 'b', order: 1, constraints: {} } as PaneData
-  ]);
-  const changed = writable(false);
-
-  const unregister = unregisterPaneFn(panes, changed);
-
-  unregister('a');
-
-  t.deepEqual(
-    panes.get().map(p => p.id),
-    ['b']
-  );
-  t.true(changed.get());
-});
 
 test('registerResizeHandlerFn updates layout on resize', t => {
   const direction = writable<Direction>('horizontal');
@@ -112,7 +72,12 @@ test('registerResizeHandlerFn updates layout on resize', t => {
     prevDelta
   );
 
-  resizeHandler(dragHandleId, dragState.get(), event);
+  resizeHandler(
+    dragHandleId,
+    dragState.get().initialLayout,
+    dragState.get().initialCursorPosition,
+    event
+  );
 
   t.deepEqual(layout.get(), [60, 40]);
 

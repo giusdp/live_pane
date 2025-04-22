@@ -14,8 +14,6 @@ export type PaneGroupData = {
     prevDelta: Writable<number>;
   };
   methods: {
-    registerPane: (paneData: PaneData) => void;
-    unregisterPane: (paneData: PaneId) => void;
     resizeHandler: (
       dragHandleId: string,
       initialLayout: number[] | null,

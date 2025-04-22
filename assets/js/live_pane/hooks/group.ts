@@ -4,17 +4,18 @@ import type { Direction, PaneData, PaneGroupData, DragState } from '../types';
 import {
   setupOnPaneDataChange,
   paneGroupInstances,
-  registerPaneFn,
   resizeHandlerFn,
   startDraggingFn,
-  stopDraggingFn,
-  unregisterPaneFn
+  stopDraggingFn
 } from '../core';
 
 export function createGroupHook() {
-  let unsubFromPaneDataChange = () => { };
+  let unsubFromPaneDataChange = () => {};
   let groupHook: Hook = {
     mounted() {
+      if (!this.el.id) {
+        throw Error('Pane Group must have an id.');
+      }
       const paneDataArray = writable<PaneData[]>([]);
       const paneDataArrayChanged = writable(false);
 
@@ -25,14 +26,9 @@ export function createGroupHook() {
       const dragHandleId = this.el.getAttribute('data-drag-handle-id') || '';
 
       if (paneGroupInstances.has(this.el.id)) {
-        throw Error('Group Pane with id ' + this.el.id + ' already exists.');
+        throw Error('Pane Group with id "' + this.el.id + '" already exists.');
       }
 
-      const registerPane = registerPaneFn(paneDataArray, paneDataArrayChanged);
-      const unregisterPane = unregisterPaneFn(
-        paneDataArray,
-        paneDataArrayChanged
-      );
       const resizeHandler = resizeHandlerFn(
         direction,
         groupId,
@@ -55,8 +51,6 @@ export function createGroupHook() {
           prevDelta
         },
         methods: {
-          registerPane,
-          unregisterPane,
           resizeHandler,
           startDragging,
           stopDragging
@@ -65,13 +59,11 @@ export function createGroupHook() {
 
       paneGroupInstances.set(this.el.id, groupData);
 
-      console.log('mounted pane group', this.el.id);
-      paneDataArray.subscribe(v => console.log(JSON.stringify(v)));
-      unsubFromPaneDataChange = setupOnPaneDataChange(
-        layout,
-        paneDataArray,
-        paneDataArrayChanged
-      );
+      // unsubFromPaneDataChange = setupOnPaneDataChange(
+      //   layout,
+      //   paneDataArray,
+      //   paneDataArrayChanged
+      // );
     },
 
     destroyed() {

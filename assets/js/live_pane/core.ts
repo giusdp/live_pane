@@ -2,7 +2,11 @@ import { adjustLayoutByDelta } from './adjust-layout';
 import { areArraysEqual, areNumbersAlmostEqual } from './compare';
 import { resizePane } from './resize';
 import { Writable } from './store';
-import { computePaneFlexBoxStyle, resetGlobalCursorStyle, setGlobalCursorStyle } from './style';
+import {
+  computePaneFlexBoxStyle,
+  resetGlobalCursorStyle,
+  setGlobalCursorStyle
+} from './style';
 import {
   Direction,
   DragState,
@@ -16,50 +20,6 @@ import {
 import { assert, isMouseEvent } from './utils';
 
 export const paneGroupInstances = new Map<GroupId, PaneGroupData>();
-
-export function registerPaneFn(
-  paneDataArray: Writable<PaneData[]>,
-  paneDataArrayChanged: Writable<boolean>
-) {
-  return (paneData: PaneData) => {
-    paneDataArray.update(curr => {
-      const newArr = [...curr, paneData];
-      newArr.sort((paneA, paneB) => {
-        const orderA = paneA.order;
-        const orderB = paneB.order;
-
-        if (orderA == null && orderB == null) {
-          return 0;
-        } else if (orderA == null) {
-          return -1;
-        } else if (orderB == null) {
-          return 1;
-        } else {
-          return orderA - orderB;
-        }
-      });
-      return newArr;
-    });
-    paneDataArrayChanged.set(true);
-  };
-}
-
-export function unregisterPaneFn(
-  paneDataArray: Writable<PaneData[]>,
-  paneDataArrayChanged: Writable<boolean>
-) {
-  return (paneId: PaneId) => {
-    const $paneDataArray = paneDataArray.get();
-    const index = findPaneDataIndex($paneDataArray, paneId);
-
-    if (index < 0) return;
-    paneDataArray.update(curr => {
-      curr.splice(index, 1);
-      paneDataArrayChanged.set(true);
-      return curr;
-    });
-  };
-}
 
 export function resizeHandlerFn(
   direction: Writable<Direction>,
@@ -139,7 +99,6 @@ export function resizeHandlerFn(
 
     if (layoutChanged) {
       layout.set(nextLayout);
-      console.log("Layout changed", nextLayout);
     }
   };
 }
@@ -174,7 +133,11 @@ export function stopDraggingFn() {
   };
 }
 
-function findPaneDataIndex(paneDataArray: PaneData[], paneDataId: PaneId) {
+// TODO: add tests
+export function findPaneDataIndex(
+  paneDataArray: PaneData[],
+  paneDataId: PaneId
+) {
   return paneDataArray.findIndex(
     prevPaneData => prevPaneData.id === paneDataId
   );
@@ -274,12 +237,6 @@ export function setupOnPaneDataChange(
   paneDataArrayChanged: Writable<boolean>
 ) {
   return paneDataArrayChanged.subscribe(changed => {
-    console.log(
-      'onPaneDataChange setup',
-      layout.get(),
-      paneDataArray.get(),
-      paneDataArrayChanged.get()
-    );
     if (!changed) return;
     paneDataArrayChanged.set(false);
 
@@ -306,7 +263,9 @@ export function setupOnPaneDataChange(
   });
 }
 
-function getUnsafeDefaultLayout({ paneDataArray }: { paneDataArray: PaneData[] }): number[] {
+function getUnsafeDefaultLayout({
+  paneDataArray
+}: { paneDataArray: PaneData[] }): number[] {
   const layout = Array<number>(paneDataArray.length);
 
   const paneConstraintsArray = paneDataArray.map(
@@ -427,7 +386,6 @@ function validatePaneGroupLayout({
 
   return nextLayout;
 }
-
 
 // function getPaneStyleFn(paneDataArray: PaneData[], paneDataId: PaneId) {
 //   const paneIndex = findPaneDataIndex(paneDataArray, paneDataId);

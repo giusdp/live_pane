@@ -1,6 +1,7 @@
 import { Hook } from 'phoenix_live_view';
-import { paneGroupInstances } from '../core';
-import { PaneData } from '../types';
+import { findPaneDataIndex, paneGroupInstances } from '../core';
+import { PaneData, PaneId } from '../types';
+import { Writable } from '../store';
 
 export function createPaneHook() {
   let groupId: string | null = null;
@@ -10,7 +11,7 @@ export function createPaneHook() {
     mounted() {
       groupId = this.el.getAttribute('data-pane-group-id');
       if (!groupId) {
-        throw Error('Group id must exist for pane components!');
+        throw Error('data-pane-group-id must exist for pane components!');
       }
       paneId = this.el.id;
       if (!paneId) {
@@ -20,6 +21,9 @@ export function createPaneHook() {
       const order = orderAttr ? Number(orderAttr) : 0;
 
       const groupData = paneGroupInstances.get(groupId);
+      if (!groupData) {
+        throw Error('Group with id "' + groupId + '" does not exist.');
+      }
 
       const paneData: PaneData = {
         id: this.el.id,
@@ -33,14 +37,63 @@ export function createPaneHook() {
         }
       };
 
-      groupData?.methods.registerPane(paneData);
-      console.log('mounted pane in group', groupId);
+      registerPane(
+        paneData,
+        groupData.props.paneDataArray,
+        groupData.props.paneDataArrayChanged
+      );
     },
 
     destroyed() {
       const groupData = paneGroupInstances.get(groupId!);
-      groupData?.methods.unregisterPane(paneId!);
+      unregisterPane(
+        paneId!,
+        groupData!.props.paneDataArray,
+        groupData!.props.paneDataArrayChanged
+      );
     }
   };
   return paneHook;
+}
+
+function registerPane(
+  paneData: PaneData,
+  paneDataArray: Writable<PaneData[]>,
+  paneDataArrayChanged: Writable<boolean>
+) {
+  paneDataArrayChanged.set(true);
+  paneDataArray.update(curr => {
+    const newArr = [...curr, paneData];
+    newArr.sort((paneA, paneB) => {
+      const orderA = paneA.order;
+      const orderB = paneB.order;
+
+      if (orderA == null && orderB == null) {
+        return 0;
+      } else if (orderA == null) {
+        return -1;
+      } else if (orderB == null) {
+        return 1;
+      } else {
+        return orderA - orderB;
+      }
+    });
+    return newArr;
+  });
+}
+
+function unregisterPane(
+  paneId: PaneId,
+  paneDataArray: Writable<PaneData[]>,
+  paneDataArrayChanged: Writable<boolean>
+) {
+  const $paneDataArray = paneDataArray.get();
+  const index = findPaneDataIndex($paneDataArray, paneId);
+
+  if (index < 0) return;
+  paneDataArray.update(curr => {
+    curr.splice(index, 1);
+    paneDataArrayChanged.set(true);
+    return curr;
+  });
 }
