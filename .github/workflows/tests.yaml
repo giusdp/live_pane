@@ -15,21 +15,17 @@ permissions:
 
 jobs:
   test-elixir:
-    name: Test on OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}}
+    name: Test Elixir Demo App
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./demo
-    strategy:
-      matrix:
-        otp: ['26.2.4']   
-        elixir: ['1.16.2']
     steps:
     - name: Set up Elixir
       uses: erlef/setup-beam@v1
       with:
-        otp-version: ${{matrix.otp}}
-        elixir-version: ${{matrix.elixir}}
+        otp-version: '26.2.4'
+        elixir-version: '1.16.2'
 
     - name: Checkout code
       uses: actions/checkout@v3
@@ -76,23 +72,54 @@ jobs:
   test-js:
     name: Test hooks
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./assets
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Setup nodejs
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        cache: 'npm'
-        cache-dependency-path: "./assets"
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: '26.2.4'
+          elixir-version: '1.16.2'
 
-    - name: Install Node.js dependencies
-      run: npm ci
+      - name: Cache deps
+        id: cache-deps
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-elixir-deps
+        with:
+          path: deps
+          key: ${{ runner.os }}-mix-${{ env.cache-name }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-mix-${{ env.cache-name }}-
 
-    - name: Run tests
-      run: npm test
+      - name: Cache compiled build
+        id: cache-build
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-compiled-build
+        with:
+          path: _build
+          key: ${{ runner.os }}-mix-${{ env.cache-name }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-mix-${{ env.cache-name }}-
+            ${{ runner.os }}-mix-
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Setup nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: "./assets"
+
+      - name: Install Node.js dependencies
+        run: npm ci
+        working-directory: ./assets
+
+      - name: Run tests
+        run: npm test
+        working-directory: ./assets
