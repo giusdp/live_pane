@@ -56,7 +56,7 @@ export function createResizerHook() {
       }
 
       // -- Register the resizer
-      groupData.props.dragHandleId = resizerId;
+      groupData.dragHandleId = resizerId;
 
       // -- Prepare action params
       resizerActionParams.disabled.set(
@@ -88,7 +88,7 @@ export function createResizerHook() {
 
       // -- Set up the element
       const style = styleToString({
-        cursor: getCursorStyle(groupData.props.direction.get()),
+        cursor: getCursorStyle(groupData.direction.get()),
         'touch-action': 'none',
         'user-select': 'none',
         '-webkit-user-select': 'none',
@@ -104,9 +104,9 @@ export function createResizerHook() {
         e.preventDefault();
         console.log('mousedown resizer', groupId, resizerId);
         const nextDragState = startDragging(
-          groupData.props.direction,
-          groupData.props.layout,
-          groupData.props.dragHandleId,
+          groupData.direction,
+          groupData.layout,
+          groupData.dragHandleId,
           e
         );
         console.log('drag state', nextDragState);
@@ -134,7 +134,7 @@ export function createResizerHook() {
 }
 
 function setupResizeEvents(node: HTMLElement, params: ResizerActionParams) {
-  let unsub = () => { };
+  let unsub = () => {};
   function update(params: ResizerActionParams) {
     unsub();
     const { disabled, resizeHandlerCallback, isDragging } = params;
@@ -180,14 +180,14 @@ function resizeHandler(
 ) {
   event.preventDefault();
 
-  const direction = groupData.props.direction.get();
-  const $prevLayout = groupData.props.layout.get();
-  const $paneDataArray = groupData.props.paneDataArray.get();
-  const pivotIndices = getPivotIndices(groupId, groupData.props.dragHandleId);
+  const direction = groupData.direction.get();
+  const $prevLayout = groupData.layout.get();
+  const $paneDataArray = groupData.paneDataArray.get();
+  const pivotIndices = getPivotIndices(groupId, groupData.dragHandleId);
 
   let delta = getDeltaPercentage(
     event,
-    groupData.props.dragHandleId,
+    groupData.dragHandleId,
     direction,
     initialCursorPosition
   );
@@ -218,10 +218,10 @@ function resizeHandler(
     // Watch for multiple subsequent deltas; this might occur for tiny cursor movements.
     // In this case, Pane sizes might not change–
     // but updating cursor in this scenario would cause a flicker.
-    const $prevDelta = groupData.props.prevDelta.get();
+    const $prevDelta = groupData.prevDelta.get();
 
     if ($prevDelta != delta) {
-      groupData.props.prevDelta.set(delta);
+      groupData.prevDelta.set(delta);
 
       if (!layoutChanged) {
         // If the pointer has moved too far to resize the pane any further,
@@ -239,7 +239,7 @@ function resizeHandler(
   }
 
   if (layoutChanged) {
-    groupData.props.layout.set(nextLayout);
+    groupData.layout.set(nextLayout);
   }
 }
 

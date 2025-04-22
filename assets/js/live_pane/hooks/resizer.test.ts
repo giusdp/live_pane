@@ -33,7 +33,7 @@ test('Mounting resizer with valid data registers it to group data (sets dragHand
   groupHook.trigger('mounted');
 
   const groupData = paneGroupInstances.get('a');
-  t.is(groupData!.props.dragHandleId, '');
+  t.is(groupData!.dragHandleId, '');
 
   const resizerHook = renderHook(
     '<div data-pane-group-id="a" id="resizer1">resizer</div>',
@@ -41,5 +41,5 @@ test('Mounting resizer with valid data registers it to group data (sets dragHand
   );
   resizerHook.trigger('mounted');
 
-  t.is(groupData!.props.dragHandleId, 'resizer1');
+  t.is(groupData!.dragHandleId, 'resizer1');
 });

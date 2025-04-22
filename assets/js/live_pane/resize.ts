@@ -1,4 +1,4 @@
-import { PRECISION } from './constants';
+import { PRECISION } from './core';
 import type { PaneConstraints } from './types';
 import { assert } from './utils';
 import { compareNumbersWithTolerance } from './compare';

@@ -1,4 +1,4 @@
-import { PRECISION } from './constants';
+import { PRECISION } from './core';
 
 /**
  * Compares two numbers for equality with a given fractional precision.

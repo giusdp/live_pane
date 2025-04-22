@@ -39,8 +39,8 @@ export function createPaneHook() {
 
       registerPane(
         paneData,
-        groupData.props.paneDataArray,
-        groupData.props.paneDataArrayChanged
+        groupData.paneDataArray,
+        groupData.paneDataArrayChanged
       );
     },
 
@@ -48,8 +48,8 @@ export function createPaneHook() {
       const groupData = paneGroupInstances.get(groupId!);
       unregisterPane(
         paneId!,
-        groupData!.props.paneDataArray,
-        groupData!.props.paneDataArrayChanged
+        groupData!.paneDataArray,
+        groupData!.paneDataArrayChanged
       );
     }
   };

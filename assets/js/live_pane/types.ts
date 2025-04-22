@@ -3,14 +3,12 @@ import { Writable } from './store';
 export type GroupId = string;
 export type PaneId = string;
 export type PaneGroupData = {
-  props: {
-    paneDataArray: Writable<PaneData[]>;
-    paneDataArrayChanged: Writable<boolean>;
-    direction: Writable<Direction>;
-    dragHandleId: string;
-    layout: Writable<number[]>;
-    prevDelta: Writable<number>;
-  };
+  paneDataArray: Writable<PaneData[]>;
+  paneDataArrayChanged: Writable<boolean>;
+  direction: Writable<Direction>;
+  dragHandleId: string;
+  layout: Writable<number[]>;
+  prevDelta: Writable<number>;
 };
 
 export type Direction = 'horizontal' | 'vertical';

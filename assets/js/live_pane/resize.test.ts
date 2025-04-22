@@ -1,6 +1,6 @@
 import test from 'ava';
 import { resizePane } from './resize';
-import { PRECISION } from './constants';
+import { PRECISION } from './core';
 
 test('returns size if between min and max', t => {
   const constraints = [

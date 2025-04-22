@@ -15,8 +15,8 @@ test('Mounting pane registers it to group data', t => {
     t.fail('Group data not found');
     return;
   }
-  const panes = groupData.props.paneDataArray;
-  const changed = groupData.props.paneDataArrayChanged;
+  const panes = groupData.paneDataArray;
+  const changed = groupData.paneDataArrayChanged;
 
   t.deepEqual(panes.get(), []);
   t.false(changed.get());
@@ -50,8 +50,8 @@ test('Mounting panes registers them following data-pane-order', t => {
     t.fail('Group data not found');
     return;
   }
-  const panes = groupData.props.paneDataArray;
-  const changed = groupData.props.paneDataArrayChanged;
+  const panes = groupData.paneDataArray;
+  const changed = groupData.paneDataArrayChanged;
 
   t.deepEqual(panes.get(), []);
   t.false(changed.get());
@@ -83,7 +83,7 @@ test('destroying unregisters the panes', t => {
     t.fail('Group data not found');
     return;
   }
-  const panes = groupData.props.paneDataArray;
+  const panes = groupData.paneDataArray;
 
   const paneHook = renderHook(
     '<div data-pane-group-id="c" id="pane1">pane</div>',

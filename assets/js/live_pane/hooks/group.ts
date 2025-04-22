@@ -6,10 +6,11 @@ import type {
   PaneGroupData,
   PaneConstraints
 } from '../types';
-import { paneGroupInstances } from '../core';
+
 import { areArraysEqual, areNumbersAlmostEqual } from '../compare';
 import { assert } from '../utils';
 import { resizePane } from '../resize';
+import { paneGroupInstances } from '../core';
 
 export function createGroupHook() {
   let unsubFromPaneDataChange = () => {};
@@ -31,22 +32,20 @@ export function createGroupHook() {
       }
 
       const groupData: PaneGroupData = {
-        props: {
-          paneDataArray,
-          paneDataArrayChanged,
-          direction,
-          dragHandleId,
-          layout,
-          prevDelta
-        }
+        paneDataArray,
+        paneDataArrayChanged,
+        direction,
+        dragHandleId,
+        layout,
+        prevDelta
       };
 
       paneGroupInstances.set(this.el.id, groupData);
 
       unsubFromPaneDataChange = updateLayoutOnPaneDataChanges(
-        groupData.props.layout,
-        groupData.props.paneDataArray,
-        groupData.props.paneDataArrayChanged
+        groupData.layout,
+        groupData.paneDataArray,
+        groupData.paneDataArrayChanged
       );
     },
 
