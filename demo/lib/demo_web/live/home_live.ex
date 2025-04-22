@@ -2,8 +2,6 @@ defmodule DemoWeb.HomeLive do
   @moduledoc false
   use DemoWeb, :live_view
 
-  alias Phoenix.LiveView.JS
-
   require Logger
 
   def handle_params(_params, _uri, socket) do

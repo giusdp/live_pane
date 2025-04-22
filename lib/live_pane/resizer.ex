@@ -22,6 +22,12 @@ defmodule LivePane.Resizer do
     {:ok, socket}
   end
 
+  # @impl true
+  # def handle_event("update_active", params, socket) do
+  #   params |> dbg()
+  #   {:noreply, socket}
+  # end
+
   @impl true
   def render(assigns) do
     ~H"""
