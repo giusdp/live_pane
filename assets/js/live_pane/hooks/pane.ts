@@ -1,7 +1,7 @@
 import { Hook } from 'phoenix_live_view';
-import { paneGroupInstances } from '../core';
 import { PaneData, PaneId } from '../types';
 import { Writable } from '../store';
+import { paneGroupInstances } from '../core';
 
 export function createPaneHook() {
   let groupId: string | null = null;
@@ -61,7 +61,6 @@ function registerPane(
   paneDataArray: Writable<PaneData[]>,
   paneDataArrayChanged: Writable<boolean>
 ) {
-  paneDataArrayChanged.set(true);
   paneDataArray.update(curr => {
     const newArr = [...curr, paneData];
     newArr.sort((paneA, paneB) => {
@@ -80,6 +79,7 @@ function registerPane(
     });
     return newArr;
   });
+  paneDataArrayChanged.set(true);
 }
 
 function unregisterPane(

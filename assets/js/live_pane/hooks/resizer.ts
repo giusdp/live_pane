@@ -138,8 +138,9 @@ function setupResizeEvents(node: HTMLElement, params: ResizerActionParams) {
   function update(params: ResizerActionParams) {
     unsub();
     const { disabled, resizeHandlerCallback, isDragging } = params;
-    if (disabled.get() || !isDragging.get() || resizeHandlerCallback === null)
+    if (disabled.get() || !isDragging.get() || resizeHandlerCallback === null) {
       return;
+    }
 
     const onMove = (event: ResizeEvent) => {
       resizeHandlerCallback(event);
@@ -280,7 +281,6 @@ function getDeltaPercentage(
 
   const isHorizontal = dir === 'horizontal';
 
-  console.log('The handle ID:', dragHandleId);
   const handleElement = getResizeHandleElement(dragHandleId);
   assert(handleElement);
 
