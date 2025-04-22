@@ -136,12 +136,9 @@ function setupReactivePaneStyle(
   const arrUnsub = groupData.paneDataArray.subscribe(
     _ => (el.style.cssText = getPaneStyle())
   );
-  const layoutUnsub = groupData.layout.subscribe(
-    _ => {
-      console.log("zono sottoscritto", getPaneStyle());
-      (el.style.cssText = getPaneStyle())
-    }
-  );
+  const layoutUnsub = groupData.layout.subscribe(_ => {
+    el.style.cssText = getPaneStyle();
+  });
   const dragStateUnsub = groupData.dragState.subscribe(
     _ => (el.style.cssText = getPaneStyle())
   );
