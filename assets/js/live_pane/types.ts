@@ -7,21 +7,9 @@ export type PaneGroupData = {
     paneDataArray: Writable<PaneData[]>;
     paneDataArrayChanged: Writable<boolean>;
     direction: Writable<Direction>;
-    // TODO: does groupId need to be writable?
-    groupId: Writable<string>;
     dragHandleId: string;
     layout: Writable<number[]>;
     prevDelta: Writable<number>;
-  };
-  methods: {
-    resizeHandler: (
-      dragHandleId: string,
-      initialLayout: number[] | null,
-      initialCursorPosition: number | null,
-      event: ResizeEvent
-    ) => void;
-    startDragging: (handleId: string, event: ResizeEvent) => DragState;
-    stopDragging: () => void;
   };
 };
 

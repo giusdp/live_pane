@@ -1,80 +1,92 @@
 import { Hook } from 'phoenix_live_view';
 import { paneGroupInstances } from '../core';
-import type { DragState, GroupId, ResizeEvent, ResizeHandler } from '../types';
+import type {
+  Direction,
+  DragState,
+  GroupId,
+  PaneGroupData,
+  ResizeEvent,
+  ResizeHandler
+} from '../types';
 import { chain } from '../chain';
 import { addEventListener } from '../event';
-import { getCursorStyle, styleToString } from '../style';
+import {
+  getCursorStyle,
+  resetGlobalCursorStyle,
+  setGlobalCursorStyle,
+  styleToString
+} from '../style';
 import { type Unsubscriber, writable, Writable } from '../store';
+import { assert, isMouseEvent } from '../utils';
+import { areArraysEqual } from '../compare';
+import { adjustLayoutByDelta } from '../adjust-layout';
 
 type ResizerActionParams = {
-  disabledStore: Writable<boolean>;
+  disabled: Writable<boolean>;
   resizeHandlerCallback: ResizeHandler | null;
-  isDraggingStore: Writable<boolean>;
-  stopDragging: () => void;
+  isDragging: Writable<boolean>;
 };
 
 export function createResizerHook() {
-  let groupId: string | null = null;
-  let resizerId: string | null = null;
-
   let isFocused = false;
+  let dragState: DragState | null = null;
+
   const resizerActionParams: ResizerActionParams = {
-    disabledStore: writable(false),
+    disabled: writable(false),
     resizeHandlerCallback: null,
-    isDraggingStore: writable(false),
-    stopDragging: () => {}
+    isDragging: writable(false)
   };
-  const dragState: Writable<DragState | null> = writable(null);
 
   let unsubs: Unsubscriber[] = [];
 
   let resizerHook: Hook = {
     mounted() {
       // -- Retrieve data from group
-      groupId = grabGroupId(this.el);
-      resizerId = grabResizerId(this.el);
-      const groupData = getGroupData(groupId);
+      let groupId = this.el.getAttribute('data-pane-group-id');
+      if (!groupId) {
+        throw Error('data-pane-group-id must exist for resizer components!');
+      }
+      let resizerId = this.el.getAttribute('id');
+      if (!resizerId) {
+        throw Error('Resizer id must exist for resizer components!');
+      }
+      const groupData = paneGroupInstances.get(groupId);
+      if (!groupData) {
+        throw Error(`Missing group "${groupId} for resizer "${resizerId}`);
+      }
+
+      // -- Register the resizer
+      groupData.props.dragHandleId = resizerId;
 
       // -- Prepare action params
-      resizerActionParams.disabledStore.set(
+      resizerActionParams.disabled.set(
         this.el.getAttribute('data-disabled') === 'true'
       );
 
-      if (!resizerActionParams.disabledStore.get()) {
+      if (!resizerActionParams.disabled.get()) {
         resizerActionParams.resizeHandlerCallback = (event: ResizeEvent) => {
-          const initialCursorPosition =
-            dragState.get()?.initialCursorPosition ?? null;
-          const initialLayout = dragState.get()?.initialLayout ?? null;
-          groupData.methods.resizeHandler(
-            resizerId!,
-            initialLayout ?? null,
-            initialCursorPosition ?? null,
-            event
-          );
+          const cursorPos = dragState ? dragState.initialCursorPosition : null;
+          const initialLayout = dragState ? dragState.initialLayout : null;
+          resizeHandler(groupId, groupData, initialLayout, cursorPos, event);
         };
       }
 
-      resizerActionParams.stopDragging = groupData.methods.stopDragging;
-
-      const { update, unsub: unsubEvents } = setupResizerAction(
+      const { update, unsub: unsubEvents } = setupResizeEvents(
         this.el,
         resizerActionParams
       );
       unsubs.push(unsubEvents);
 
       unsubs.push(
-        resizerActionParams.disabledStore.subscribe(_ =>
-          update(resizerActionParams)
-        )
+        resizerActionParams.disabled.subscribe(_ => update(resizerActionParams))
       );
       unsubs.push(
-        resizerActionParams.isDraggingStore.subscribe(_ =>
+        resizerActionParams.isDragging.subscribe(_ =>
           update(resizerActionParams)
         )
       );
 
       // -- Set up the element
-
       const style = styleToString({
         cursor: getCursorStyle(groupData.props.direction.get()),
         'touch-action': 'none',
@@ -91,14 +103,20 @@ export function createResizerHook() {
       this.el.onmousedown = e => {
         e.preventDefault();
         console.log('mousedown resizer', groupId, resizerId);
-        const nextDragState = groupData.methods.startDragging(resizerId!, e);
+        const nextDragState = startDragging(
+          groupData.props.direction,
+          groupData.props.layout,
+          groupData.props.dragHandleId,
+          e
+        );
         console.log('drag state', nextDragState);
-        dragState.set(nextDragState);
-        resizerActionParams.isDraggingStore.set(true);
+        dragState = nextDragState;
+        resizerActionParams.isDragging.set(true);
       };
       this.el.onmouseup = () => {
         console.log('mouseup resizer', groupId, resizerId);
-        resizerActionParams.isDraggingStore.set(false);
+        dragState = null;
+        resizerActionParams.isDragging.set(false);
       };
 
       console.log('mounted resizer', groupId, resizerId);
@@ -111,49 +129,17 @@ export function createResizerHook() {
       unsubs = [];
     }
   };
+
   return resizerHook;
 }
 
-function getGroupData(groupId: string) {
-  const groupData = paneGroupInstances.get(groupId);
-  if (!groupData) {
-    throw Error('Group data must exist for resizer components!');
-  }
-  return groupData;
-}
-
-function grabGroupId(el: HTMLElement): GroupId {
-  let groupId = el.getAttribute('data-pane-group-id');
-  if (!groupId) {
-    throw Error('Group id must exist for resizer components!');
-  }
-  return groupId;
-}
-
-function grabResizerId(el: HTMLElement): string {
-  let resizerId = el.getAttribute('data-pane-resizer-id');
-  if (!resizerId) {
-    throw Error('Resizer id must exist for resizer components!');
-  }
-  return resizerId;
-}
-
-function setupResizerAction(node: HTMLElement, params: ResizerActionParams) {
-  let unsub = () => {};
+function setupResizeEvents(node: HTMLElement, params: ResizerActionParams) {
+  let unsub = () => { };
   function update(params: ResizerActionParams) {
     unsub();
-    const {
-      disabledStore,
-      resizeHandlerCallback,
-      isDraggingStore,
-      stopDragging
-    } = params;
-    const disabled = disabledStore.get();
-    const isDragging = isDraggingStore.get();
-
-    console.log('Updating...', disabled, isDragging);
-
-    if (disabled || !isDragging || resizeHandlerCallback === null) return;
+    const { disabled, resizeHandlerCallback, isDragging } = params;
+    if (disabled.get() || !isDragging.get() || resizeHandlerCallback === null)
+      return;
 
     const onMove = (event: ResizeEvent) => {
       resizeHandlerCallback(event);
@@ -165,7 +151,9 @@ function setupResizerAction(node: HTMLElement, params: ResizerActionParams) {
 
     const stopDraggingAndBlur = () => {
       node.blur();
-      stopDragging();
+      isDragging.set(false);
+      resetGlobalCursorStyle();
+      console.log("I'm not dragging ANYMOREEEEEEEE");
     };
 
     unsub = chain(
@@ -181,4 +169,183 @@ function setupResizerAction(node: HTMLElement, params: ResizerActionParams) {
     update,
     unsub
   };
+}
+
+function resizeHandler(
+  groupId: GroupId,
+  groupData: PaneGroupData,
+  initialLayout: number[] | null,
+  initialCursorPosition: number | null,
+  event: ResizeEvent
+) {
+  event.preventDefault();
+
+  const direction = groupData.props.direction.get();
+  const $prevLayout = groupData.props.layout.get();
+  const $paneDataArray = groupData.props.paneDataArray.get();
+  const pivotIndices = getPivotIndices(groupId, groupData.props.dragHandleId);
+
+  let delta = getDeltaPercentage(
+    event,
+    groupData.props.dragHandleId,
+    direction,
+    initialCursorPosition
+  );
+  console.log('Calculated delta', delta);
+  if (delta === 0) return;
+
+  // support RTL
+  const isHorizontal = direction === 'horizontal';
+  if (document.dir === 'rtl' && isHorizontal) {
+    delta = -delta;
+  }
+
+  const paneConstraintsArray = $paneDataArray.map(
+    paneData => paneData.constraints
+  );
+
+  const nextLayout = adjustLayoutByDelta({
+    delta,
+    layout: initialLayout ?? $prevLayout,
+    paneConstraintsArray,
+    pivotIndices,
+    trigger: 'mouse-or-touch'
+  });
+
+  const layoutChanged = !areArraysEqual($prevLayout, nextLayout);
+
+  if (isMouseEvent(event)) {
+    // Watch for multiple subsequent deltas; this might occur for tiny cursor movements.
+    // In this case, Pane sizes might not change–
+    // but updating cursor in this scenario would cause a flicker.
+    const $prevDelta = groupData.props.prevDelta.get();
+
+    if ($prevDelta != delta) {
+      groupData.props.prevDelta.set(delta);
+
+      if (!layoutChanged) {
+        // If the pointer has moved too far to resize the pane any further,
+        // update the cursor style for a visual clue.
+        // This mimics VS Code behavior.
+        if (isHorizontal) {
+          setGlobalCursorStyle(delta < 0 ? 'horizontal-min' : 'horizontal-max');
+        } else {
+          setGlobalCursorStyle(delta < 0 ? 'vertical-min' : 'vertical-max');
+        }
+      } else {
+        setGlobalCursorStyle(isHorizontal ? 'horizontal' : 'vertical');
+      }
+    }
+  }
+
+  if (layoutChanged) {
+    groupData.props.layout.set(nextLayout);
+  }
+}
+
+function startDragging(
+  direction: Writable<Direction>,
+  layout: Writable<number[]>,
+  dragHandleId: string,
+  event: ResizeEvent
+) {
+  const handleElement = getResizeHandleElement(dragHandleId);
+  assert(handleElement);
+
+  return {
+    dragHandleId,
+    dragHandleRect: handleElement.getBoundingClientRect(),
+    initialCursorPosition: getResizeEventCursorPosition(direction.get(), event),
+    initialLayout: layout.get()
+  } satisfies DragState;
+}
+
+// -- Helper functions
+function getPivotIndices(
+  groupId: string,
+  dragHandleId: string
+): [indexBefore: number, indexAfter: number] {
+  const index = getResizeHandleElementIndex(groupId, dragHandleId);
+  return index != null ? [index, index + 1] : [-1, -1];
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/movementX
+function getDeltaPercentage(
+  e: ResizeEvent,
+  dragHandleId: string,
+  dir: Direction,
+  initialCursorPosition: number | null
+): number {
+  if (initialCursorPosition == null) return 0;
+
+  const isHorizontal = dir === 'horizontal';
+
+  console.log('The handle ID:', dragHandleId);
+  const handleElement = getResizeHandleElement(dragHandleId);
+  assert(handleElement);
+
+  const groupId = handleElement.getAttribute('data-pane-group-id');
+  assert(groupId);
+
+  const cursorPosition = getResizeEventCursorPosition(dir, e);
+
+  const groupElement = getPaneGroupElement(groupId);
+  assert(groupElement);
+
+  const groupRect = groupElement.getBoundingClientRect();
+  const groupSizeInPixels = isHorizontal ? groupRect.width : groupRect.height;
+
+  const offsetPixels = cursorPosition - initialCursorPosition;
+  const offsetPercentage = (offsetPixels / groupSizeInPixels) * 100;
+
+  return offsetPercentage;
+}
+
+function getResizeEventCursorPosition(dir: Direction, e: ResizeEvent): number {
+  const isHorizontal = dir === 'horizontal';
+
+  if (isMouseEvent(e)) {
+    return isHorizontal ? e.clientX : e.clientY;
+  } else {
+    throw Error(
+      `Unsupported event type "${(e as { type?: string }).type ?? 'unknown'}"`
+    );
+  }
+}
+
+function getResizeHandleElementsForGroup(groupId: string): HTMLElement[] {
+  return Array.from(
+    document.querySelectorAll(
+      `[data-pane-resizer-id][data-pane-group-id="${groupId}"]`
+    )
+  );
+}
+
+function getResizeHandleElementIndex(
+  groupId: string,
+  id: string
+): number | null {
+  const handles = getResizeHandleElementsForGroup(groupId);
+  const index = handles.findIndex(
+    handle => handle.getAttribute('data-pane-resizer-id') === id
+  );
+  return index ?? null;
+}
+
+function getResizeHandleElement(id: string): HTMLElement | null {
+  const element = document.querySelector(`[data-pane-resizer-id="${id}"]`);
+  if (element) {
+    return element as HTMLElement;
+  }
+  return null;
+}
+
+function getPaneGroupElement(id: string): HTMLElement | null {
+  const element = document.querySelector(
+    `[data-pane-group][data-pane-group-id="${id}"]`
+  );
+  if (element) {
+    return element as HTMLElement;
+  }
+  return null;
 }

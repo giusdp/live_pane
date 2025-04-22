@@ -1,13 +1,7 @@
 import { Hook } from 'phoenix_live_view';
 import { writable } from '../store';
 import type { Direction, PaneData, PaneGroupData, DragState } from '../types';
-import {
-  setupOnPaneDataChange,
-  paneGroupInstances,
-  resizeHandlerFn,
-  startDraggingFn,
-  stopDraggingFn
-} from '../core';
+import { setupOnPaneDataChange, paneGroupInstances } from '../core';
 
 export function createGroupHook() {
   let unsubFromPaneDataChange = () => {};
@@ -20,7 +14,6 @@ export function createGroupHook() {
       const paneDataArrayChanged = writable(false);
 
       const direction = writable<Direction>('horizontal');
-      const groupId = writable<string>(this.el.id);
       const layout = writable<number[]>([]);
       const prevDelta = writable<number>(0);
       const dragHandleId = this.el.getAttribute('data-drag-handle-id') || '';
@@ -29,31 +22,14 @@ export function createGroupHook() {
         throw Error('Pane Group with id "' + this.el.id + '" already exists.');
       }
 
-      const resizeHandler = resizeHandlerFn(
-        direction,
-        groupId,
-        layout,
-        paneDataArray,
-        prevDelta
-      );
-
-      const startDragging = startDraggingFn(direction, layout);
-      const stopDragging = stopDraggingFn();
-
       const groupData: PaneGroupData = {
         props: {
           paneDataArray,
           paneDataArrayChanged,
           direction,
-          groupId,
           dragHandleId,
           layout,
           prevDelta
-        },
-        methods: {
-          resizeHandler,
-          startDragging,
-          stopDragging
         }
       };
 
