@@ -1,11 +1,14 @@
 import { Hook } from 'phoenix_live_view';
-import { PaneData, PaneId } from '../types';
-import { Writable } from '../store';
+import { PaneData, PaneGroupData, PaneId } from '../types';
+import { Unsubscriber, Writable } from '../store';
 import { paneGroupInstances } from '../core';
+import { computePaneFlexBoxStyle } from '../style';
 
 export function createPaneHook() {
   let groupId: string | null = null;
   let paneId: string | null = null;
+
+  let unsubs: Unsubscriber[] = [];
 
   let paneHook: Hook = {
     mounted() {
@@ -42,9 +45,15 @@ export function createPaneHook() {
         groupData.paneDataArray,
         groupData.paneDataArrayChanged
       );
+
+      unsubs = setupReactivePaneStyle(this.el, groupData, paneData, undefined);
     },
 
     destroyed() {
+      for (const unsub of unsubs) {
+        unsub();
+      }
+      unsubs = [];
       const groupData = paneGroupInstances.get(groupId!);
       unregisterPane(
         paneId!,
@@ -102,4 +111,40 @@ function findPaneDataIndex(paneDataArray: PaneData[], paneDataId: PaneId) {
   return paneDataArray.findIndex(
     prevPaneData => prevPaneData.id === paneDataId
   );
+}
+
+function setupReactivePaneStyle(
+  el: HTMLElement,
+  groupData: PaneGroupData,
+  paneData: PaneData,
+  defaultSize: number | undefined
+) {
+  const getPaneStyle = () => {
+    const paneIndex = findPaneDataIndex(
+      groupData.paneDataArray.get(),
+      paneData.id
+    );
+    return computePaneFlexBoxStyle({
+      defaultSize,
+      dragState: groupData.dragState.get(),
+      layout: groupData.layout.get(),
+      paneData: groupData.paneDataArray.get(),
+      paneIndex
+    });
+  };
+
+  const arrUnsub = groupData.paneDataArray.subscribe(
+    _ => (el.style.cssText = getPaneStyle())
+  );
+  const layoutUnsub = groupData.layout.subscribe(
+    _ => {
+      console.log("zono sottoscritto", getPaneStyle());
+      (el.style.cssText = getPaneStyle())
+    }
+  );
+  const dragStateUnsub = groupData.dragState.subscribe(
+    _ => (el.style.cssText = getPaneStyle())
+  );
+
+  return [arrUnsub, layoutUnsub, dragStateUnsub];
 }

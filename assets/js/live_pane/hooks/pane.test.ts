@@ -96,3 +96,27 @@ test('destroying unregisters the panes', t => {
   paneHook.trigger('destroyed');
   t.is(panes.get().length, 0);
 });
+
+test('Changes to layout updates the style', t => {
+  const groupHook = renderHook('<div id="d">group</div>', createGroupHook());
+  groupHook.trigger('mounted');
+
+  const groupData = paneGroupInstances.get('d');
+  if (!groupData) {
+    t.fail('Group data not found');
+    return;
+  }
+
+  const paneHook = renderHook(
+    '<div data-pane-group-id="d" id="pane1">pane</div>',
+    createPaneHook()
+  );
+  paneHook.trigger('mounted');
+  renderHook(
+    '<div data-pane-group-id="d" id="pane2">pane</div>',
+    createPaneHook()
+  ).trigger('mounted');
+  const oldStyleValues = paneHook.element().style._values;
+  groupData.layout.update(l => [l[0] + 20, l[1] - 20]);
+  t.notDeepEqual(paneHook.element().style._values, oldStyleValues);
+});
