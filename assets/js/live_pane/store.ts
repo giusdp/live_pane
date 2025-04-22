@@ -17,8 +17,6 @@ export interface Writable<T> {
   subscribe(this: void, run: Subscriber<T>): Unsubscriber;
 }
 
-const subscriber_queue: any[] = [];
-
 export function writable<T>(value: T): Writable<T> {
   const subscribers: Set<Subscriber<T>> = new Set();
 
@@ -27,7 +25,6 @@ export function writable<T>(value: T): Writable<T> {
       value = new_value;
       for (const subscriber of subscribers) {
         subscriber(new_value);
-        subscriber_queue.push(subscriber, value);
       }
     }
   }
@@ -37,7 +34,7 @@ export function writable<T>(value: T): Writable<T> {
   }
 
   function update(fn: (value: T) => T): void {
-    set(fn(value as any));
+    set(fn(value));
   }
 
   function subscribe(subscriber: Subscriber<T>): Unsubscriber {
