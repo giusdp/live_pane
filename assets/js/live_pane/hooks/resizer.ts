@@ -29,7 +29,6 @@ type ResizerActionParams = {
 
 export function createResizerHook() {
   let isFocused = false;
-  let dragState: DragState | null = null;
 
   const resizerActionParams: ResizerActionParams = {
     disabled: writable(false),
@@ -65,8 +64,10 @@ export function createResizerHook() {
 
       if (!resizerActionParams.disabled.get()) {
         resizerActionParams.resizeHandlerCallback = (event: ResizeEvent) => {
-          const cursorPos = dragState ? dragState.initialCursorPosition : null;
-          const initialLayout = dragState ? dragState.initialLayout : null;
+          const cursorPos =
+            groupData.dragState.get()?.initialCursorPosition ?? null;
+          const initialLayout =
+            groupData.dragState.get()?.initialLayout ?? null;
           resizeHandler(groupId, groupData, initialLayout, cursorPos, event);
         };
       }
@@ -75,6 +76,7 @@ export function createResizerHook() {
         this.el,
         resizerActionParams
       );
+
       unsubs.push(unsubEvents);
 
       unsubs.push(
@@ -110,12 +112,14 @@ export function createResizerHook() {
           e
         );
         console.log('drag state', nextDragState);
-        dragState = nextDragState;
+        groupData.dragState.set(nextDragState);
         resizerActionParams.isDragging.set(true);
       };
+
       this.el.onmouseup = () => {
         console.log('mouseup resizer', groupId, resizerId);
-        dragState = null;
+        groupData.dragState.set(null);
+        resetGlobalCursorStyle();
         resizerActionParams.isDragging.set(false);
       };
 
@@ -192,7 +196,6 @@ function resizeHandler(
     direction,
     initialCursorPosition
   );
-  console.log('Calculated delta', delta);
   if (delta === 0) return;
 
   // support RTL

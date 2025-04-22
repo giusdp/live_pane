@@ -19,17 +19,18 @@ export function createGroupHook() {
       if (!this.el.id) {
         throw Error('Pane Group must have an id.');
       }
+      if (paneGroupInstances.has(this.el.id)) {
+        throw Error(`Pane Group with id "${this.el.id}" already exists.`);
+      }
+
       const paneDataArray = writable<PaneData[]>([]);
       const paneDataArrayChanged = writable(false);
 
       const direction = writable<Direction>('horizontal');
       const layout = writable<number[]>([]);
       const prevDelta = writable<number>(0);
+      const dragState = writable(null);
       const dragHandleId = this.el.getAttribute('data-drag-handle-id') || '';
-
-      if (paneGroupInstances.has(this.el.id)) {
-        throw Error('Pane Group with id "' + this.el.id + '" already exists.');
-      }
 
       const groupData: PaneGroupData = {
         paneDataArray,
@@ -37,7 +38,8 @@ export function createGroupHook() {
         direction,
         dragHandleId,
         layout,
-        prevDelta
+        prevDelta,
+        dragState
       };
 
       paneGroupInstances.set(this.el.id, groupData);
