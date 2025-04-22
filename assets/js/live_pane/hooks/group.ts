@@ -57,7 +57,7 @@ export function createGroupHook() {
   return groupHook;
 }
 
-export function updateLayoutOnPaneDataChanges(
+function updateLayoutOnPaneDataChanges(
   layout: Writable<number[]>,
   paneDataArray: Writable<PaneData[]>,
   paneDataArrayChanged: Writable<boolean>
