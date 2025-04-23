@@ -9,7 +9,7 @@ This project has taken a lot of inspiration and code from the work done by
 
 - [x] Basic 2 pane dragging
 - [ ] Support nested groups
-- [ ] Vertical orientation
+- [x] Vertical orientation
 - [ ] Collapsible panes 
 - [ ] Custom Styling
 - [ ] Event callbacks

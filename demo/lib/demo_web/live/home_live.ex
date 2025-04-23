@@ -5,8 +5,6 @@ defmodule DemoWeb.HomeLive do
   require Logger
 
   def handle_params(_params, _uri, socket) do
-    Logger.info("Mounted")
-
     {:noreply, socket}
   end
 
