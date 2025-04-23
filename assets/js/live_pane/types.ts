@@ -9,7 +9,6 @@ export type PaneGroupData = {
   dragHandleId: string;
   layout: Writable<number[]>;
   prevDelta: Writable<number>;
-
 };
 
 export type Direction = 'horizontal' | 'vertical';

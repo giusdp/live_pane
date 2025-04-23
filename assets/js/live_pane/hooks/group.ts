@@ -13,7 +13,7 @@ import { resizePane } from '../resize';
 import { paneGroupInstances } from '../core';
 
 export function createGroupHook() {
-  let unsubFromPaneDataChange = () => { };
+  let unsubFromPaneDataChange = () => {};
   let groupHook: Hook = {
     mounted() {
       if (!this.el.id) {
@@ -37,11 +37,10 @@ export function createGroupHook() {
         direction,
         dragHandleId,
         layout,
-        prevDelta,
+        prevDelta
       };
 
       paneGroupInstances.set(this.el.id, groupData);
-      console.log(paneGroupInstances);
 
       unsubFromPaneDataChange = updateLayoutOnPaneDataChanges(
         groupData.layout,

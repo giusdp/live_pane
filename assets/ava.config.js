@@ -6,5 +6,8 @@ export default {
         rewritePaths: { "src/": "build/" },
         compile: false
     },
-    nodeArguments: ['--import=tsimp/import']
+    nodeArguments: ['--import=tsimp/import'],
+    files: [
+        'js/**/*.test.ts'
+    ],
 };

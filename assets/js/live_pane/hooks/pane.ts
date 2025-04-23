@@ -139,7 +139,9 @@ function setupReactivePaneStyle(
   const layoutUnsub = groupData.layout.subscribe(_ => {
     el.style.cssText = getPaneStyle();
   });
-  const dragStateUnsub = dragState.subscribe(_ => (el.style.cssText = getPaneStyle()));
+  const dragStateUnsub = dragState.subscribe(
+    _ => (el.style.cssText = getPaneStyle())
+  );
 
   return [arrUnsub, layoutUnsub, dragStateUnsub];
 }

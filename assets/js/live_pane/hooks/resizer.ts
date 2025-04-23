@@ -64,10 +64,8 @@ export function createResizerHook() {
 
       if (!resizerActionParams.disabled.get()) {
         resizerActionParams.resizeHandlerCallback = (event: ResizeEvent) => {
-          const cursorPos =
-            dragState.get()?.initialCursorPosition ?? null;
-          const initialLayout =
-            dragState.get()?.initialLayout ?? null;
+          const cursorPos = dragState.get()?.initialCursorPosition ?? null;
+          const initialLayout = dragState.get()?.initialLayout ?? null;
           resizeHandler(groupId, groupData, initialLayout, cursorPos, event);
         };
       }
@@ -84,11 +82,8 @@ export function createResizerHook() {
       );
       unsubs.push(
         resizerActionParams.isDragging.subscribe(c => {
-          console.log('isDragging', c, 'resizer id', resizerId);
-          console.log('resizerActionParams', resizerActionParams)
-          update(resizerActionParams)
-        }
-        )
+          update(resizerActionParams);
+        })
       );
 
       // -- Set up the element
@@ -114,9 +109,10 @@ export function createResizerHook() {
           groupData.dragHandleId,
           e
         );
-        console.log('drag state', nextDragState);
         dragState.set(nextDragState);
-        resizerActionParams.isDragging.set(dragState.get()?.dragHandleId === resizerId);
+        resizerActionParams.isDragging.set(
+          dragState.get()?.dragHandleId === resizerId
+        );
       };
 
       this.el.onmouseup = () => {
@@ -141,7 +137,7 @@ export function createResizerHook() {
 }
 
 function setupResizeEvents(node: HTMLElement, params: ResizerActionParams) {
-  let unsub = () => { };
+  let unsub = () => {};
   function update(params: ResizerActionParams) {
     unsub();
     const { disabled, resizeHandlerCallback, isDragging } = params;
@@ -161,7 +157,6 @@ function setupResizeEvents(node: HTMLElement, params: ResizerActionParams) {
       node.blur();
       isDragging.set(false);
       resetGlobalCursorStyle();
-      console.log("I'm not dragging ANYMOREEEEEEEE");
     };
 
     unsub = chain(
