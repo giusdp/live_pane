@@ -15,3 +15,4 @@ This project has taken a lot of inspiration and code from the work done by
 - [ ] Event callbacks
 - [ ] Keyboard support
 - [ ] Touch support
+- [ ] Save state

@@ -39,11 +39,11 @@ defmodule LivePane.Resizer do
       data-pane-resizer=""
       data-pane-resizer-id={@id}
       data-pane-group-id={@group_id}
-      data-direction={@direction}
-      data-active={@active}
-      data-enabled={@enabled}
+      data-pane-direction={@direction}
+      data-pane-active={@active}
+      data-pane-enabled={@enabled}
       tabindex={@tab_index}
-      style=""
+      class={@class}
     >
       {render_slot(@inner_block)}
     </div>
