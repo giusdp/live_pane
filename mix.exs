@@ -59,17 +59,12 @@ defmodule LivePane.MixProject do
 
   defp files do
     ~w"""
-    assets/js
+    assets
     priv
-    lib/live_pane.ex
-    lib/live_pane/components.ex
-    lib/live_pane/live_component.ex
-    lib/live_pane/utility.ex
-    lib/live_pane/gettext.ex
+    lib
     CHANGELOG.md
     LICENSE.md
     mix.exs
-    package.json
     README.md
     """
   end
@@ -78,7 +73,7 @@ defmodule LivePane.MixProject do
     [
       main: "readme",
       extras: ["README.md", "CHANGELOG.md"],
-      source_ref: "master",
+      source_ref: "main",
       source_url: "https://github.com/giusdp/live_pane",
       skip_undefined_reference_warnings_on: ["CHANGELOG.md"]
     ]
