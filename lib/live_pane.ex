@@ -9,12 +9,13 @@ defmodule LivePane do
 
   attr :id, :string, required: true
   attr :class, :string, default: ""
+  attr :direction, :string, values: ["horizontal", "vertical"], default: "horizontal"
   attr :rest, :global
   slot :inner_block, required: true
 
   def group(assigns) do
     ~H"""
-    <.live_component module={LivePane.Group} id={@id} class={@class} {@rest}>
+    <.live_component module={LivePane.Group} id={@id} direction={@direction} class={@class} {@rest}>
       {render_slot(@inner_block)}
     </.live_component>
     """
