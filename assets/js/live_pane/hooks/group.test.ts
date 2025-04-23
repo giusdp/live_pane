@@ -45,3 +45,14 @@ test('Group updates layout on pane changes', t => {
 
   t.deepEqual(groupData.layout.get(), [50, 50]);
 });
+
+test('Mounting group with explicit direction sets it correctly', t => {
+  const hook = renderHook(
+    '<div id="c" data-pane-direction="vertical">group</div>',
+    createGroupHook()
+  );
+  hook.trigger('mounted');
+
+  const groupData = paneGroupInstances.get('c');
+  t.is(groupData!.direction.get(), 'vertical');
+});
