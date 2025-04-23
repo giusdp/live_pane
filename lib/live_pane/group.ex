@@ -19,7 +19,7 @@ defmodule LivePane.Group do
       data-pane-group-id={@id}
       phx-update="ignore"
       phx-hook="live_pane_group"
-      class={["flex flex-row h-full w-full overflow-hidden"]}
+      class={["flex flex-row h-full w-full overflow-hidden items-center justify-center", @class]}
     >
       {render_slot(@inner_block)}
     </div>
