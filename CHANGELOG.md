@@ -8,4 +8,4 @@ All notable changes to this project will be documented in this file.
 
 - Basic functionality to resize a 2-pane layout.
 - Horizontal and vertical pane orientation.
-- Multiple pane groups.
+- Basic multiple (and nested) pane groups.
