@@ -1,13 +1,13 @@
 import { Hook } from 'phoenix_live_view';
-import { dragState, paneGroupInstances } from '../core';
+import { dragState, paneGroupInstances, resizerInstances } from '../core';
 import type {
   Direction,
   DragState,
   GroupId,
   PaneGroupData,
   ResizeEvent,
-  ResizeHandler
-} from '../types';
+  ResizerData
+} from '../core';
 import { chain } from '../chain';
 import { addEventListener } from '../event';
 import {
@@ -21,22 +21,8 @@ import { assert, isMouseEvent } from '../utils';
 import { areArraysEqual } from '../compare';
 import { adjustLayoutByDelta } from '../adjust-layout';
 
-type ResizerActionParams = {
-  disabled: Writable<boolean>;
-  resizeHandlerCallback: ResizeHandler | null;
-  isDragging: Writable<boolean>;
-};
-
 export function createResizerHook() {
   let isFocused = false;
-
-  const resizerActionParams: ResizerActionParams = {
-    disabled: writable(false),
-    resizeHandlerCallback: null,
-    isDragging: writable(false)
-  };
-
-  let unsubs: Unsubscriber[] = [];
 
   let resizerHook: Hook = {
     mounted() {
@@ -55,15 +41,22 @@ export function createResizerHook() {
       }
 
       // -- Register the resizer
+      const thisResizerData: ResizerData = {
+        disabled: writable(false),
+        isDragging: writable(false),
+        resizeHandlerCallback: null,
+        unsubs: []
+      };
+      resizerInstances.set(resizerId, thisResizerData);
       groupData.dragHandleId = resizerId;
 
       // -- Prepare action params
-      resizerActionParams.disabled.set(
-        this.el.getAttribute('data-disabled') === 'true'
+      thisResizerData.disabled.set(
+        this.el.getAttribute('data-pane-disabled') === 'true'
       );
 
-      if (!resizerActionParams.disabled.get()) {
-        resizerActionParams.resizeHandlerCallback = (event: ResizeEvent) => {
+      if (!thisResizerData.disabled.get()) {
+        thisResizerData.resizeHandlerCallback = (event: ResizeEvent) => {
           const cursorPos = dragState.get()?.initialCursorPosition ?? null;
           const initialLayout = dragState.get()?.initialLayout ?? null;
           resizeHandler(groupId, groupData, initialLayout, cursorPos, event);
@@ -72,17 +65,17 @@ export function createResizerHook() {
 
       const { update, unsub: unsubEvents } = setupResizeEvents(
         this.el,
-        resizerActionParams
+        thisResizerData
       );
 
-      unsubs.push(unsubEvents);
+      thisResizerData.unsubs.push(unsubEvents);
 
-      unsubs.push(
-        resizerActionParams.disabled.subscribe(_ => update(resizerActionParams))
+      thisResizerData.unsubs.push(
+        thisResizerData.disabled.subscribe(_ => update(thisResizerData))
       );
-      unsubs.push(
-        resizerActionParams.isDragging.subscribe(c => {
-          update(resizerActionParams);
+      thisResizerData.unsubs.push(
+        thisResizerData.isDragging.subscribe(c => {
+          update(thisResizerData);
         })
       );
 
@@ -102,7 +95,6 @@ export function createResizerHook() {
 
       this.el.onmousedown = e => {
         e.preventDefault();
-        console.log('mousedown resizer', groupId, resizerId);
         const nextDragState = startDragging(
           groupData.direction,
           groupData.layout,
@@ -110,35 +102,33 @@ export function createResizerHook() {
           e
         );
         dragState.set(nextDragState);
-        resizerActionParams.isDragging.set(
+        thisResizerData.isDragging.set(
           dragState.get()?.dragHandleId === resizerId
         );
       };
 
       this.el.onmouseup = () => {
-        console.log('mouseup resizer', groupId, resizerId);
         dragState.set(null);
         resetGlobalCursorStyle();
-        resizerActionParams.isDragging.set(false);
+        thisResizerData.isDragging.set(false);
       };
-
-      console.log('mounted resizer', groupId, resizerId);
     },
 
     destroyed() {
-      for (const unsub of unsubs) {
+      let resizerId = this.el.getAttribute('id');
+      for (const unsub of resizerInstances.get(resizerId!)?.unsubs ?? []) {
         unsub();
       }
-      unsubs = [];
+      resizerInstances.delete(resizerId!);
     }
   };
 
   return resizerHook;
 }
 
-function setupResizeEvents(node: HTMLElement, params: ResizerActionParams) {
+function setupResizeEvents(node: HTMLElement, params: ResizerData) {
   let unsub = () => {};
-  function update(params: ResizerActionParams) {
+  function update(params: ResizerData) {
     unsub();
     const { disabled, resizeHandlerCallback, isDragging } = params;
     if (disabled.get() || !isDragging.get() || resizeHandlerCallback === null) {
@@ -156,6 +146,7 @@ function setupResizeEvents(node: HTMLElement, params: ResizerActionParams) {
     const stopDraggingAndBlur = () => {
       node.blur();
       isDragging.set(false);
+      dragState.set(null);
       resetGlobalCursorStyle();
     };
 
@@ -334,7 +325,9 @@ function getResizeHandleElementIndex(
 }
 
 function getResizeHandleElement(id: string): HTMLElement | null {
-  const element = document.querySelector(`[data-pane-resizer-id="${id}"]`);
+  const element = document.querySelector(
+    `[data-pane-resizer][data-pane-resizer-id="${id}"]`
+  );
   if (element) {
     return element as HTMLElement;
   }
