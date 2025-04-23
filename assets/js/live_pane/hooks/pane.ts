@@ -1,22 +1,17 @@
 import { Hook } from 'phoenix_live_view';
-import { PaneData, PaneGroupData, PaneId } from '../core';
-import { Unsubscriber, Writable } from '../store';
+import { PaneData, PaneGroupData, PaneId, paneInstances } from '../core';
+import { Writable } from '../store';
 import { dragState, paneGroupInstances } from '../core';
 import { computePaneFlexBoxStyle } from '../style';
 
 export function createPaneHook() {
-  let groupId: string | null = null;
-  let paneId: string | null = null;
-
-  let unsubs: Unsubscriber[] = [];
-
   let paneHook: Hook = {
     mounted() {
-      groupId = this.el.getAttribute('data-pane-group-id');
+      const groupId = this.el.getAttribute('data-pane-group-id');
       if (!groupId) {
         throw Error('data-pane-group-id must exist for pane components!');
       }
-      paneId = this.el.id;
+      const paneId = this.el.id;
       if (!paneId) {
         throw Error('Id must exist for pane components!');
       }
@@ -46,20 +41,31 @@ export function createPaneHook() {
         groupData.paneDataArrayChanged
       );
 
-      unsubs = setupReactivePaneStyle(this.el, groupData, paneData, undefined);
+      const unsubs = setupReactivePaneStyle(
+        this.el,
+        groupData,
+        paneData,
+        undefined
+      );
+      paneInstances.set(paneId, {
+        groupId,
+        unsubs
+      });
     },
 
     destroyed() {
+      const { groupId, unsubs } = paneInstances.get(this.el.id)!;
+
       for (const unsub of unsubs) {
         unsub();
       }
-      unsubs = [];
       const groupData = paneGroupInstances.get(groupId!);
       unregisterPane(
-        paneId!,
+        this.el.id,
         groupData!.paneDataArray,
         groupData!.paneDataArrayChanged
       );
+      paneInstances.delete(this.el.id);
     }
   };
   return paneHook;

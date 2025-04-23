@@ -13,7 +13,6 @@ import { assert } from '../utils';
 import { resizePane } from '../resize';
 
 export function createGroupHook() {
-  let unsubFromPaneDataChange = () => {};
   let groupHook: Hook = {
     mounted() {
       if (!this.el.id) {
@@ -33,33 +32,34 @@ export function createGroupHook() {
       const prevDelta = writable<number>(0);
       const dragHandleId = '';
 
+      const unsubFromPaneDataChange = updateLayoutOnPaneDataChange(
+        layout,
+        paneDataArray,
+        paneDataArrayChanged
+      );
       const groupData: PaneGroupData = {
         paneDataArray,
         paneDataArrayChanged,
         direction,
         dragHandleId,
         layout,
-        prevDelta
+        prevDelta,
+        unsubFromPaneDataChange
       };
 
       paneGroupInstances.set(this.el.id, groupData);
-
-      unsubFromPaneDataChange = updateLayoutOnPaneDataChanges(
-        groupData.layout,
-        groupData.paneDataArray,
-        groupData.paneDataArrayChanged
-      );
     },
 
     destroyed() {
-      unsubFromPaneDataChange();
+      paneGroupInstances.get(this.el.id)?.unsubFromPaneDataChange();
+      paneGroupInstances.delete(this.el.id);
     }
   };
 
   return groupHook;
 }
 
-function updateLayoutOnPaneDataChanges(
+function updateLayoutOnPaneDataChange(
   layout: Writable<number[]>,
   paneDataArray: Writable<PaneData[]>,
   paneDataArrayChanged: Writable<boolean>
