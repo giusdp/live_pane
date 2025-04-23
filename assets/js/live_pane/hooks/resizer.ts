@@ -16,7 +16,7 @@ import {
   setGlobalCursorStyle,
   styleToString
 } from '../style';
-import { type Unsubscriber, writable, Writable } from '../store';
+import { writable, Writable } from '../store';
 import { assert, isMouseEvent } from '../utils';
 import { areArraysEqual } from '../compare';
 import { adjustLayoutByDelta } from '../adjust-layout';
