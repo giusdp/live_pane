@@ -1,0 +1,25 @@
+{
+    "name": "live_pane",
+    "version": "0.1.0",
+    "description": "Phoenix Hooks for LivePane",
+    "license": "MIT",
+    "private": true,
+    "module": "./priv/static/live_pane.esm.js",
+    "main": "./priv/static/live_pane.cjs.js",
+    "exports": {
+        "import": "./priv/static/live_pane.esm.js",
+        "require": "./priv/static/live_pane.cjs.js"
+    },
+    "author": "Giuseppe De Palma",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/giusdp/live_pane.git"
+    },
+    "files": [
+        "README.md",
+        "LICENSE",
+        "package.json",
+        "priv/static/*",
+        "assets/js/live_pane/*"
+    ]
+}

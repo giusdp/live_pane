@@ -67,6 +67,7 @@ defmodule LivePane.MixProject do
     LICENSE
     mix.exs
     README.md
+    package.json
     """
   end
 
