@@ -21,7 +21,7 @@ end
 
 Then open up your `app.js` and import/setup the hooks:
 
-```javascript
+```js
 const { groupHook, paneHook, resizerHook } = createLivePaneHooks()
 
 let Hooks = {}

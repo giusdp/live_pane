@@ -60,7 +60,7 @@ defmodule LivePane.MixProject do
 
   defp files do
     ~w"""
-    assets
+    assets/js
     priv
     lib
     CHANGELOG.md
