@@ -1,5 +1,5 @@
 import { Hook } from 'phoenix_live_view';
-import { paneGroupInstances } from '../core';
+import { dragState, paneGroupInstances } from '../core';
 import type {
   Direction,
   DragState,
@@ -65,9 +65,9 @@ export function createResizerHook() {
       if (!resizerActionParams.disabled.get()) {
         resizerActionParams.resizeHandlerCallback = (event: ResizeEvent) => {
           const cursorPos =
-            groupData.dragState.get()?.initialCursorPosition ?? null;
+            dragState.get()?.initialCursorPosition ?? null;
           const initialLayout =
-            groupData.dragState.get()?.initialLayout ?? null;
+            dragState.get()?.initialLayout ?? null;
           resizeHandler(groupId, groupData, initialLayout, cursorPos, event);
         };
       }
@@ -83,8 +83,11 @@ export function createResizerHook() {
         resizerActionParams.disabled.subscribe(_ => update(resizerActionParams))
       );
       unsubs.push(
-        resizerActionParams.isDragging.subscribe(_ =>
+        resizerActionParams.isDragging.subscribe(c => {
+          console.log('isDragging', c, 'resizer id', resizerId);
+          console.log('resizerActionParams', resizerActionParams)
           update(resizerActionParams)
+        }
         )
       );
 
@@ -112,13 +115,13 @@ export function createResizerHook() {
           e
         );
         console.log('drag state', nextDragState);
-        groupData.dragState.set(nextDragState);
-        resizerActionParams.isDragging.set(true);
+        dragState.set(nextDragState);
+        resizerActionParams.isDragging.set(dragState.get()?.dragHandleId === resizerId);
       };
 
       this.el.onmouseup = () => {
         console.log('mouseup resizer', groupId, resizerId);
-        groupData.dragState.set(null);
+        dragState.set(null);
         resetGlobalCursorStyle();
         resizerActionParams.isDragging.set(false);
       };
@@ -138,7 +141,7 @@ export function createResizerHook() {
 }
 
 function setupResizeEvents(node: HTMLElement, params: ResizerActionParams) {
-  let unsub = () => {};
+  let unsub = () => { };
   function update(params: ResizerActionParams) {
     unsub();
     const { disabled, resizeHandlerCallback, isDragging } = params;

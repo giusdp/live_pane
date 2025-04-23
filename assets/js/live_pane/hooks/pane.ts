@@ -1,7 +1,7 @@
 import { Hook } from 'phoenix_live_view';
 import { PaneData, PaneGroupData, PaneId } from '../types';
 import { Unsubscriber, Writable } from '../store';
-import { paneGroupInstances } from '../core';
+import { dragState, paneGroupInstances } from '../core';
 import { computePaneFlexBoxStyle } from '../style';
 
 export function createPaneHook() {
@@ -126,7 +126,7 @@ function setupReactivePaneStyle(
     );
     return computePaneFlexBoxStyle({
       defaultSize,
-      dragState: groupData.dragState.get(),
+      dragState: dragState.get(),
       layout: groupData.layout.get(),
       paneData: groupData.paneDataArray.get(),
       paneIndex
@@ -139,9 +139,7 @@ function setupReactivePaneStyle(
   const layoutUnsub = groupData.layout.subscribe(_ => {
     el.style.cssText = getPaneStyle();
   });
-  const dragStateUnsub = groupData.dragState.subscribe(
-    _ => (el.style.cssText = getPaneStyle())
-  );
+  const dragStateUnsub = dragState.subscribe(_ => (el.style.cssText = getPaneStyle()));
 
   return [arrUnsub, layoutUnsub, dragStateUnsub];
 }
