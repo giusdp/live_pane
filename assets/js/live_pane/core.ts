@@ -3,9 +3,14 @@ import { Unsubscriber, writable, type Writable } from './store';
 export const PRECISION = 10;
 
 export const paneGroupInstances = new Map<GroupId, PaneGroupData>();
+export const paneInstances = new Map<PaneId, PaneManagementData>();
 export const resizerInstances = new Map<ResizerId, ResizerData>();
 export const dragState: Writable<DragState | null> = writable(null);
 
+export type PaneManagementData = {
+  groupId: string;
+  unsubs: Unsubscriber[];
+};
 export type ResizerData = {
   disabled: Writable<boolean>;
   resizeHandlerCallback: ResizeHandler | null;
@@ -16,6 +21,7 @@ export type ResizerData = {
 export type GroupId = string;
 export type PaneId = string;
 export type ResizerId = string;
+
 export type PaneGroupData = {
   paneDataArray: Writable<PaneData[]>;
   paneDataArrayChanged: Writable<boolean>;
@@ -23,6 +29,8 @@ export type PaneGroupData = {
   dragHandleId: string;
   layout: Writable<number[]>;
   prevDelta: Writable<number>;
+
+  unsubFromPaneDataChange: Unsubscriber;
 };
 
 export type Direction = 'horizontal' | 'vertical';

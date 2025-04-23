@@ -56,3 +56,13 @@ test('Mounting group with explicit direction sets it correctly', t => {
   const groupData = paneGroupInstances.get('c');
   t.is(groupData!.direction.get(), 'vertical');
 });
+
+test('Destroying group removes it from the group instances map', t => {
+  const groupHook = renderHook('<div id="d">group</div>', createGroupHook());
+  groupHook.trigger('mounted');
+
+  t.true(paneGroupInstances.has('d'));
+
+  groupHook.trigger('destroyed');
+  t.false(paneGroupInstances.has('d'));
+});

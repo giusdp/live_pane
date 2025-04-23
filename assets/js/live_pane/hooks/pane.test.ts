@@ -1,10 +1,8 @@
 import test from 'ava';
-import { writable } from '../store';
-import type { PaneData } from '../core';
 import { createPaneHook } from './pane';
 import { renderHook } from '../../../test';
 import { createGroupHook } from './group';
-import { paneGroupInstances } from '../core';
+import { paneGroupInstances, paneInstances } from '../core';
 
 test('Mounting pane registers it to group data', t => {
   const groupHook = renderHook('<div id="a">group</div>', createGroupHook());
@@ -119,4 +117,18 @@ test('Changes to layout updates the style', t => {
   const oldStyleValues = paneHook.element().style._values;
   groupData.layout.update(l => [l[0] + 20, l[1] - 20]);
   t.notDeepEqual(paneHook.element().style._values, oldStyleValues);
+});
+
+test('Pane is added to paneInstances', t => {
+  const groupHook = renderHook('<div id="e">group</div>', createGroupHook());
+  groupHook.trigger('mounted');
+
+  const paneHook = renderHook(
+    '<div data-pane-group-id="e" id="pane1">pane</div>',
+    createPaneHook()
+  );
+  paneHook.trigger('mounted');
+  t.truthy(paneInstances.has('pane1'));
+  paneHook.trigger('destroyed');
+  t.falsy(paneInstances.has('pane1'));
 });
