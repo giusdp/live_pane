@@ -63,7 +63,7 @@ defmodule LivePane.MixProject do
     priv
     lib
     CHANGELOG.md
-    LICENSE.md
+    LICENSE
     mix.exs
     README.md
     """
