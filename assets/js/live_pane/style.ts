@@ -1,4 +1,4 @@
-import type { DragState, PaneData } from './types';
+import type { DragState, PaneData } from './core';
 
 /**
  * A utility function that converts a style object to a string,

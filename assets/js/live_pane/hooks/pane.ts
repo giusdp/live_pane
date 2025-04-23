@@ -1,5 +1,5 @@
 import { Hook } from 'phoenix_live_view';
-import { PaneData, PaneGroupData, PaneId } from '../types';
+import { PaneData, PaneGroupData, PaneId } from '../core';
 import { Unsubscriber, Writable } from '../store';
 import { dragState, paneGroupInstances } from '../core';
 import { computePaneFlexBoxStyle } from '../style';

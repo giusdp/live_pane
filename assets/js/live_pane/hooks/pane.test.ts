@@ -1,6 +1,6 @@
 import test from 'ava';
 import { writable } from '../store';
-import type { PaneData } from '../types';
+import type { PaneData } from '../core';
 import { createPaneHook } from './pane';
 import { renderHook } from '../../../test';
 import { createGroupHook } from './group';

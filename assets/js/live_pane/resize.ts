@@ -1,5 +1,5 @@
 import { PRECISION } from './core';
-import type { PaneConstraints } from './types';
+import type { PaneConstraints } from './core';
 import { assert } from './utils';
 import { compareNumbersWithTolerance } from './compare';
 
