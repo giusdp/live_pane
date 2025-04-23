@@ -8,12 +8,13 @@ defmodule LivePane do
   use Phoenix.Component
 
   attr :id, :string, required: true
+  attr :class, :string, default: ""
   attr :rest, :global
   slot :inner_block, required: true
 
   def group(assigns) do
     ~H"""
-    <.live_component module={LivePane.Group} id={@id} {@rest}>
+    <.live_component module={LivePane.Group} id={@id} class={@class} {@rest}>
       {render_slot(@inner_block)}
     </.live_component>
     """
@@ -21,12 +22,13 @@ defmodule LivePane do
 
   attr :id, :string, required: true
   attr :group_id, :string, required: true
+  attr :class, :string, default: ""
   attr :rest, :global
   slot :inner_block, required: true
 
   def pane(assigns) do
     ~H"""
-    <.live_component module={LivePane.Pane} group_id={@group_id} id={@id} {@rest}>
+    <.live_component module={LivePane.Pane} group_id={@group_id} id={@id} class={@class} {@rest}>
       {render_slot(@inner_block)}
     </.live_component>
     """
@@ -37,6 +39,7 @@ defmodule LivePane do
   attr :direction, :string, default: "horizontal"
   attr :active, :string, default: "pointer"
   attr :disabled, :boolean, default: false
+  attr :class, :string, default: ""
   attr :rest, :global
   slot :inner_block
 
@@ -49,6 +52,7 @@ defmodule LivePane do
       direction={@direction}
       active={@active}
       disabled={@disabled}
+      class={@class}
       {@rest}
     >
       {render_slot(@inner_block)}
