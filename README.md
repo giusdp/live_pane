@@ -8,7 +8,7 @@ This project has taken a lot of inspiration and code from the work done by
 ## ROADMAP
 
 - [x] Basic 2 pane dragging
-- [ ] Support nested groups
+- [x] Support nested groups
 - [x] Vertical orientation
 - [ ] Collapsible panes 
 - [ ] Custom Styling
