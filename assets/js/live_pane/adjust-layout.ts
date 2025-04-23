@@ -1,4 +1,4 @@
-import type { PaneConstraints } from './types';
+import type { PaneConstraints } from './core';
 import { assert } from './utils';
 import { compareNumbersWithTolerance, areNumbersAlmostEqual } from './compare';
 import { resizePane } from './resize';

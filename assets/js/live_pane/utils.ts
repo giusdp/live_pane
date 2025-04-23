@@ -1,4 +1,4 @@
-import type { ResizeEvent } from './types';
+import type { ResizeEvent } from './core';
 
 export function noop() {}
 
