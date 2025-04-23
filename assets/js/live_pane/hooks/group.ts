@@ -5,12 +5,12 @@ import type {
   PaneData,
   PaneGroupData,
   PaneConstraints
-} from '../types';
+} from '../core';
+import { paneGroupInstances } from '../core';
 
 import { areArraysEqual, areNumbersAlmostEqual } from '../compare';
 import { assert } from '../utils';
 import { resizePane } from '../resize';
-import { paneGroupInstances } from '../core';
 
 export function createGroupHook() {
   let unsubFromPaneDataChange = () => {};
@@ -23,13 +23,15 @@ export function createGroupHook() {
         throw Error(`Pane Group with id "${this.el.id}" already exists.`);
       }
 
+      const dir = this.el.getAttribute('data-pane-direction') || 'horizontal';
+
       const paneDataArray = writable<PaneData[]>([]);
       const paneDataArrayChanged = writable(false);
 
-      const direction = writable<Direction>('horizontal');
+      const direction = writable<Direction>(dir as Direction);
       const layout = writable<number[]>([]);
       const prevDelta = writable<number>(0);
-      const dragHandleId = this.el.getAttribute('data-drag-handle-id') || '';
+      const dragHandleId = '';
 
       const groupData: PaneGroupData = {
         paneDataArray,
