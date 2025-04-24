@@ -57,7 +57,7 @@ test('Mounting resizer registers it to the resizerInstances map', t => {
   t.is(resizerData!.disabled.get(), false);
   t.is(resizerData!.isDragging.get(), false);
   t.not(resizerData!.resizeHandlerCallback, null);
-  t.is(resizerData!.unsubs.length, 3);
+  t.is(resizerData!.unsubs.length, 1);
 });
 
 test('Resizer gets removed on destroy', t => {
