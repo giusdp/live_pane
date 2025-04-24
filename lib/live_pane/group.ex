@@ -8,7 +8,7 @@ defmodule LivePane.Group do
   def update(assigns, socket) do
     class =
       assigns.class <>
-        if assigns.direction == "horizontal", do: " flex-row", else: " flex-col"
+        if assigns.direction == "vertical", do: " flex-col", else: " flex-row"
 
     socket =
       assign(socket, assigns)
