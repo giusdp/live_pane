@@ -17,7 +17,7 @@ import {
   styleToString
 } from '../style';
 import { writable, Writable } from '../store';
-import { assert, isMouseEvent } from '../utils';
+import { assert, isMouseEvent, isTouchEvent } from '../utils';
 import { areArraysEqual } from '../compare';
 import { adjustLayoutByDelta } from '../adjust-layout';
 
@@ -112,6 +112,32 @@ export function createResizerHook() {
         resetGlobalCursorStyle();
         thisResizerData.isDragging.set(false);
       };
+
+      this.el.ontouchcancel = () => {
+        dragState.set(null);
+        resetGlobalCursorStyle();
+        thisResizerData.isDragging.set(false);
+      };
+
+      this.el.ontouchend = () => {
+        dragState.set(null);
+        resetGlobalCursorStyle();
+        thisResizerData.isDragging.set(false);
+      };
+
+      this.el.ontouchstart = e => {
+        e.preventDefault();
+        const nextDragState = startDragging(
+          groupData.direction,
+          groupData.layout,
+          groupData.dragHandleId,
+          e
+        );
+        dragState.set(nextDragState);
+        thisResizerData.isDragging.set(
+          dragState.get()?.dragHandleId === resizerId
+        );
+      };
     },
 
     destroyed() {
@@ -154,7 +180,9 @@ function setupResizeEvents(node: HTMLElement, params: ResizerData) {
       addEventListener(document.body, 'contextmenu', stopDraggingAndBlur),
       addEventListener(document.body, 'mousemove', onMove),
       addEventListener(document.body, 'mouseleave', onMouseLeave),
-      addEventListener(window, 'mouseup', stopDraggingAndBlur)
+      addEventListener(window, 'mouseup', stopDraggingAndBlur),
+      addEventListener(document.body, 'touchmove', onMove, { passive: false }),
+      addEventListener(window, 'touchend', stopDraggingAndBlur)
     );
   }
   update(params);
@@ -207,7 +235,7 @@ function resizeHandler(
 
   const layoutChanged = !areArraysEqual($prevLayout, nextLayout);
 
-  if (isMouseEvent(event)) {
+  if (isMouseEvent(event) || isTouchEvent(event)) {
     // Watch for multiple subsequent deltas; this might occur for tiny cursor movements.
     // In this case, Pane sizes might not change–
     // but updating cursor in this scenario would cause a flicker.
@@ -298,6 +326,10 @@ function getResizeEventCursorPosition(dir: Direction, e: ResizeEvent): number {
 
   if (isMouseEvent(e)) {
     return isHorizontal ? e.clientX : e.clientY;
+  } else if (isTouchEvent(e)) {
+    const firstTouch = e.touches[0];
+    assert(firstTouch);
+    return isHorizontal ? firstTouch.screenX : firstTouch.screenY;
   } else {
     throw Error(
       `Unsupported event type "${(e as { type?: string }).type ?? 'unknown'}"`

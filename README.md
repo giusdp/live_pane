@@ -109,7 +109,7 @@ Just make sure to set an `id` for the group and then use the same id in each pan
 - [ ] Custom Styling
 - [ ] Event callbacks
 - [ ] Keyboard support
-- [ ] Touch support
+- [x] Touch support
 - [ ] Save state
 - [ ] Documentation
 - [ ] Gen IDs in pane and resizer
