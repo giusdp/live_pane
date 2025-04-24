@@ -56,7 +56,7 @@ export type PaneData = {
   constraints: PaneConstraints;
 };
 
-export type ResizeEvent = MouseEvent;
+export type ResizeEvent = KeyboardEvent | MouseEvent | TouchEvent;
 export type ResizeHandler = (event: ResizeEvent) => void;
 
 export type PaneResizeHandleOnDragging = (isDragging: boolean) => void;

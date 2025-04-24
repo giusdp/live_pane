@@ -23,15 +23,22 @@ export function createPaneHook() {
         throw Error('Group with id "' + groupId + '" does not exist.');
       }
 
+      const collapsedSize = Number(this.el.getAttribute('collapsed-size')) || 0;
+      const collapsible = this.el.getAttribute('collapsible') === 'true';
+      const defaultSize =
+        Number(this.el.getAttribute('default-size')) || undefined;
+      const maxSize = Number(this.el.getAttribute('max-size')) || 100;
+      const minSize = Number(this.el.getAttribute('min-size')) || 0;
+
       const paneData: PaneData = {
         id: this.el.id,
         order,
         constraints: {
-          collapsedSize: 0, // TODO constraints should be passed in as props optionally
-          collapsible: false,
-          defaultSize: undefined,
-          maxSize: 100,
-          minSize: 0
+          collapsedSize,
+          collapsible,
+          defaultSize,
+          maxSize,
+          minSize
         }
       };
 

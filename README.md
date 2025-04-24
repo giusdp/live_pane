@@ -105,11 +105,12 @@ Just make sure to set an `id` for the group and then use the same id in each pan
 - [x] Basic 2 pane dragging
 - [x] Support nested groups
 - [x] Vertical orientation
-- [ ] Collapsible panes 
+- [x] Collapsible panes 
 - [ ] Custom Styling
-- [ ] Event callbacks
+- [ ] Client-side events (to LV) 
+- [ ] Server-side events (to JS) - to control programmatically collapse/expand
 - [ ] Keyboard support
-- [ ] Touch support
+- [x] Touch support
 - [ ] Save state
 - [ ] Documentation
-- [ ] Gen IDs in pane and resizer
+- [ ] Generate IDs in pane and resizer so we don't need to set them manually
