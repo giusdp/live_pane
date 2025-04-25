@@ -83,29 +83,43 @@ defmodule LivePane do
     """
   end
 
-  attr :id, :string, required: true
-  attr :group_id, :string, required: true
-  attr :direction, :string, default: "horizontal"
-  attr :active, :string, default: "pointer"
-  attr :disabled, :boolean, default: false
-  attr :class, :string, default: ""
+  attr :id, :string, required: true, doc: "The id of the resize handle."
+  attr :group_id, :string, required: true, doc: "The ID of the pane group the handle belongs to."
+
+  attr :direction, :string,
+    values: ["horizontal", "vertical"],
+    default: "horizontal",
+    doc: "The direction of the pane group the handle belongs to."
+
+  attr :active, :string,
+    values: ["pointer", "keyboard"],
+    default: "pointer",
+    doc: "The cursor style when the handle is active."
+
+  attr :disabled, :boolean, default: false, doc: "Whether the resize handle is disabled."
+  attr :class, :string, default: "", doc: "Extra classes to apply to the handle."
   attr :rest, :global
+
   slot :inner_block
 
   def resizer(assigns) do
     ~H"""
-    <.live_component
-      module={LivePane.Resizer}
-      group_id={@group_id}
+    <div
       id={@id}
-      direction={@direction}
-      active={@active}
-      disabled={@disabled}
+      role="separator"
+      phx-update="ignore"
+      phx-hook="live_pane_resizer"
+      data-pane-resizer=""
+      data-pane-resizer-id={@id}
+      data-pane-group-id={@group_id}
+      data-pane-direction={@direction}
+      data-pane-active={@active}
+      data-pane-disabled={@disabled}
       class={@class}
       {@rest}
     >
       {render_slot(@inner_block)}
-    </.live_component>
+    </div>
     """
   end
 end
