@@ -125,11 +125,6 @@ defmodule LivePane do
   attr :id, :string, required: true, doc: "The id of the resize handle."
   attr :group_id, :string, required: true, doc: "The ID of the pane group the handle belongs to."
 
-  attr :active, :string,
-    values: ["pointer", "keyboard"],
-    default: "pointer",
-    doc: "The cursor style when the handle is active."
-
   attr :disabled, :boolean, default: false, doc: "Whether the resize handle is disabled."
   attr :class, :string, default: "", doc: "Extra classes to apply to the handle."
   attr :rest, :global
@@ -149,7 +144,6 @@ defmodule LivePane do
       data-pane-resizer=""
       data-pane-resizer-id={@id}
       data-pane-group-id={@group_id}
-      data-pane-active={@active}
       data-pane-disabled={@disabled}
       class={@class}
       {@rest}
