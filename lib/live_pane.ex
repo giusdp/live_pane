@@ -65,21 +65,21 @@ defmodule LivePane do
 
   def pane(assigns) do
     ~H"""
-    <.live_component
-      module={LivePane.Pane}
-      group_id={@group_id}
+    <div
       id={@id}
+      phx-update="ignore"
+      phx-hook="live_pane"
+      data-pane-group-id={@group_id}
       class={@class}
-      collapsed_size={@collapsed_size}
+      collapsed-size={@collapsed_size}
       collapsible={@collapsible}
-      default_size={@default_size}
-      max_size={@max_size}
-      min_size={@min_size}
-      order={@order}
-      {@rest}
+      default-size={@default_size}
+      max-size={@max_size}
+      min-size={@min_size}
+      data-pane-order={@order}
     >
       {render_slot(@inner_block)}
-    </.live_component>
+    </div>
     """
   end
 
