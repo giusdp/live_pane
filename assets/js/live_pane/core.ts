@@ -16,6 +16,7 @@ export type ResizerData = {
   resizeHandlerCallback: ResizeHandler | null;
   isDragging: Writable<boolean>;
   unsubs: Unsubscriber[];
+  isFocused: Writable<boolean>;
 };
 
 export type GroupId = string;
@@ -29,6 +30,7 @@ export type PaneGroupData = {
   dragHandleId: string;
   layout: Writable<number[]>;
   prevDelta: Writable<number>;
+  keyboardResizeBy: number | null;
 
   unsubFromPaneDataChange: Unsubscriber;
 };
