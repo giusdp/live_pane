@@ -148,14 +148,17 @@
   </LivePane.pane>
 </LivePane.group>
 
-<div class="mt-12 mb-2">Collapsible Panes (min_size: 20 collapsed_size: 5)</div>
+<div class="mt-12 mb-2">
+  Collapsible Panes (collapsible: true, min_size: 15, collapsed_size: 5, max_size: 20, default_size: 20)
+</div>
 
 <LivePane.group id="demo4" class="h-[450px] border-2 border-gray-300 rounded-lg">
   <LivePane.pane
     collapsible={true}
-    collapsed_size={5}
-    min_size={15}
-    default_size={30}
+    collapsed_size={2}
+    min_size={10}
+    default_size={20}
+    max_size={20}
     group_id="demo4"
     id="demo4_pane_1"
     class="h-full"
@@ -169,6 +172,7 @@
     id="demo4-resizer"
     group_id="demo4"
     class="relative flex h-full w-2 items-center justify-center"
+    tabindex="0"
   >
     <div class="z-10 h-7 flex items-center w-4 rounded-sm border bg-brand">
       <svg
