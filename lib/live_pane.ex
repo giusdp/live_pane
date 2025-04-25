@@ -99,6 +99,9 @@ defmodule LivePane do
   The Pane component is used to create an individual pane within a PaneGroup.
   """
   def pane(assigns) do
+    collapsible = if assigns.collapsible, do: "true", else: "false"
+    assigns = assign(assigns, :collapsible, collapsible)
+
     ~H"""
     <div
       id={@id}
@@ -121,11 +124,6 @@ defmodule LivePane do
 
   attr :id, :string, required: true, doc: "The id of the resize handle."
   attr :group_id, :string, required: true, doc: "The ID of the pane group the handle belongs to."
-
-  attr :direction, :string,
-    values: ["horizontal", "vertical"],
-    default: "horizontal",
-    doc: "The direction of the pane group the handle belongs to."
 
   attr :active, :string,
     values: ["pointer", "keyboard"],
@@ -151,7 +149,6 @@ defmodule LivePane do
       data-pane-resizer=""
       data-pane-resizer-id={@id}
       data-pane-group-id={@group_id}
-      data-pane-direction={@direction}
       data-pane-active={@active}
       data-pane-disabled={@disabled}
       class={@class}
