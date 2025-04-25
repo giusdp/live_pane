@@ -14,7 +14,7 @@ Add `live_pane` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:live_pane, "~> 0.1.0"}
+    {:live_pane, "~> 0.2.0"}
   ]
 end
 ```
@@ -106,11 +106,9 @@ Just make sure to set an `id` for the group and then use the same id in each pan
 - [x] Support nested groups
 - [x] Vertical orientation
 - [x] Collapsible panes 
-- [ ] Custom Styling
-- [ ] Client-side events (to LV) 
-- [ ] Server-side events (to JS) - to control programmatically collapse/expand
-- [ ] Keyboard support
+- [x] Keyboard support
 - [x] Touch support
+- [ ] Events
 - [ ] Save state
 - [ ] Documentation
 - [ ] Generate IDs in pane and resizer so we don't need to set them manually
