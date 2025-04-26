@@ -37,6 +37,12 @@ var LiveMotion = (() => {
   function isMouseEvent(event) {
     return event.type.startsWith("mouse");
   }
+  function isTouchEvent(event) {
+    return event.type.startsWith("touch");
+  }
+  function isKeyDown(event) {
+    return event.type === "keydown";
+  }
 
   // js/live_pane/store.ts
   function writable(value) {
@@ -135,6 +141,8 @@ var LiveMotion = (() => {
           throw Error(`Pane Group with id "${this.el.id}" already exists.`);
         }
         const dir = this.el.getAttribute("data-pane-direction") || "horizontal";
+        const keyboardResizeByAttr = this.el.getAttribute("keyboard-resize-by");
+        const keyboardResizeBy = keyboardResizeByAttr ? Number(keyboardResizeByAttr) : null;
         const paneDataArray = writable([]);
         const paneDataArrayChanged = writable(false);
         const direction = writable(dir);
@@ -153,6 +161,7 @@ var LiveMotion = (() => {
           dragHandleId,
           layout,
           prevDelta,
+          keyboardResizeBy,
           unsubFromPaneDataChange
         };
         paneGroupInstances.set(this.el.id, groupData);
@@ -369,16 +378,20 @@ var LiveMotion = (() => {
         if (!groupData) {
           throw Error('Group with id "' + groupId + '" does not exist.');
         }
+        const collapsedSize = Number(this.el.getAttribute("collapsed-size")) || 0;
+        const collapsible = this.el.getAttribute("collapsible") === "true";
+        const defaultSize = Number(this.el.getAttribute("default-size")) || void 0;
+        const maxSize = Number(this.el.getAttribute("max-size")) || 100;
+        const minSize = Number(this.el.getAttribute("min-size")) || 0;
         const paneData = {
           id: this.el.id,
           order,
           constraints: {
-            collapsedSize: 0,
-            // TODO constraints should be passed in as props optionally
-            collapsible: false,
-            defaultSize: void 0,
-            maxSize: 100,
-            minSize: 0
+            collapsedSize,
+            collapsible,
+            defaultSize,
+            maxSize,
+            minSize
           }
         };
         registerPane(
@@ -649,7 +662,6 @@ var LiveMotion = (() => {
 
   // js/live_pane/hooks/resizer.ts
   function createResizerHook() {
-    let isFocused = false;
     let resizerHook = {
       mounted() {
         let groupId = this.el.getAttribute("data-pane-group-id");
@@ -668,7 +680,8 @@ var LiveMotion = (() => {
           disabled: writable(false),
           isDragging: writable(false),
           resizeHandlerCallback: null,
-          unsubs: []
+          unsubs: [],
+          isFocused: writable(false)
         };
         resizerInstances.set(resizerId, thisResizerData);
         groupData.dragHandleId = resizerId;
@@ -676,26 +689,20 @@ var LiveMotion = (() => {
           this.el.getAttribute("data-pane-disabled") === "true"
         );
         if (!thisResizerData.disabled.get()) {
+          const keyboardResizeBy = groupData.keyboardResizeBy;
           thisResizerData.resizeHandlerCallback = (event) => {
             var _a, _b, _c, _d;
             const cursorPos = (_b = (_a = dragState.get()) == null ? void 0 : _a.initialCursorPosition) != null ? _b : null;
             const initialLayout = (_d = (_c = dragState.get()) == null ? void 0 : _c.initialLayout) != null ? _d : null;
-            resizeHandler(groupId, groupData, initialLayout, cursorPos, event);
+            resizeHandler(groupId, groupData, initialLayout, cursorPos, keyboardResizeBy, event);
           };
         }
-        const { update, unsub: unsubEvents } = setupResizeEvents(
+        const unsubEvents = setupResizeEvents(
+          resizerId,
           this.el,
           thisResizerData
         );
         thisResizerData.unsubs.push(unsubEvents);
-        thisResizerData.unsubs.push(
-          thisResizerData.disabled.subscribe((_) => update(thisResizerData))
-        );
-        thisResizerData.unsubs.push(
-          thisResizerData.isDragging.subscribe((c) => {
-            update(thisResizerData);
-          })
-        );
         const style = styleToString({
           cursor: getCursorStyle(groupData.direction.get()),
           "touch-action": "none",
@@ -704,8 +711,8 @@ var LiveMotion = (() => {
           "-webkit-touch-callout": "none"
         });
         this.el.style.cssText = style;
-        this.el.onblur = () => isFocused = false;
-        this.el.onfocus = () => isFocused = true;
+        this.el.onblur = () => thisResizerData.isFocused.set(false);
+        this.el.onfocus = () => thisResizerData.isFocused.set(true);
         this.el.onmousedown = (e) => {
           var _a;
           e.preventDefault();
@@ -725,6 +732,39 @@ var LiveMotion = (() => {
           resetGlobalCursorStyle();
           thisResizerData.isDragging.set(false);
         };
+        this.el.ontouchcancel = () => {
+          dragState.set(null);
+          resetGlobalCursorStyle();
+          thisResizerData.isDragging.set(false);
+        };
+        this.el.ontouchend = () => {
+          dragState.set(null);
+          resetGlobalCursorStyle();
+          thisResizerData.isDragging.set(false);
+        };
+        this.el.ontouchstart = (e) => {
+          var _a;
+          e.preventDefault();
+          const nextDragState = startDragging(
+            groupData.direction,
+            groupData.layout,
+            groupData.dragHandleId,
+            e
+          );
+          dragState.set(nextDragState);
+          thisResizerData.isDragging.set(
+            ((_a = dragState.get()) == null ? void 0 : _a.dragHandleId) === resizerId
+          );
+        };
+        this.el.onkeydown = (e) => {
+          handleKeydown(
+            groupId,
+            resizerId,
+            thisResizerData.disabled.get(),
+            thisResizerData.resizeHandlerCallback,
+            e
+          );
+        };
       },
       destroyed() {
         var _a, _b;
@@ -737,41 +777,42 @@ var LiveMotion = (() => {
     };
     return resizerHook;
   }
-  function setupResizeEvents(node, params) {
-    let unsub = () => {
-    };
-    function update(params2) {
-      unsub();
-      const { disabled, resizeHandlerCallback, isDragging } = params2;
-      if (disabled.get() || !isDragging.get() || resizeHandlerCallback === null) {
+  function setupResizeEvents(resizerId, node, params) {
+    const { disabled, resizeHandlerCallback, isDragging } = params;
+    const onMove = (event) => {
+      var _a;
+      if (resizerId !== ((_a = dragState.get()) == null ? void 0 : _a.dragHandleId) || disabled.get() || !isDragging.get() || resizeHandlerCallback === null) {
         return;
       }
-      const onMove = (event) => {
-        resizeHandlerCallback(event);
-      };
-      const onMouseLeave = (event) => {
-        resizeHandlerCallback(event);
-      };
-      const stopDraggingAndBlur = () => {
-        node.blur();
-        isDragging.set(false);
-        dragState.set(null);
-        resetGlobalCursorStyle();
-      };
-      unsub = chain(
-        addEventListener(document.body, "contextmenu", stopDraggingAndBlur),
-        addEventListener(document.body, "mousemove", onMove),
-        addEventListener(document.body, "mouseleave", onMouseLeave),
-        addEventListener(window, "mouseup", stopDraggingAndBlur)
-      );
-    }
-    update(params);
-    return {
-      update,
-      unsub
+      resizeHandlerCallback(event);
     };
+    const onMouseLeave = (event) => {
+      var _a;
+      if (resizerId !== ((_a = dragState.get()) == null ? void 0 : _a.dragHandleId) || disabled.get() || !isDragging.get() || resizeHandlerCallback === null) {
+        return;
+      }
+      resizeHandlerCallback(event);
+    };
+    const stopDraggingAndBlur = () => {
+      var _a;
+      if (resizerId !== ((_a = dragState.get()) == null ? void 0 : _a.dragHandleId)) {
+        return;
+      }
+      node.blur();
+      isDragging.set(false);
+      dragState.set(null);
+      resetGlobalCursorStyle();
+    };
+    return chain(
+      addEventListener(document.body, "contextmenu", stopDraggingAndBlur),
+      addEventListener(document.body, "mousemove", onMove),
+      addEventListener(document.body, "mouseleave", onMouseLeave),
+      addEventListener(window, "mouseup", stopDraggingAndBlur),
+      addEventListener(document.body, "touchmove", onMove, { passive: false }),
+      addEventListener(window, "touchend", stopDraggingAndBlur)
+    );
   }
-  function resizeHandler(groupId, groupData, initialLayout, initialCursorPosition, event) {
+  function resizeHandler(groupId, groupData, initialLayout, initialCursorPosition, keyboardResizeBy, event) {
     event.preventDefault();
     const direction = groupData.direction.get();
     const $prevLayout = groupData.layout.get();
@@ -781,7 +822,8 @@ var LiveMotion = (() => {
       event,
       groupData.dragHandleId,
       direction,
-      initialCursorPosition
+      initialCursorPosition,
+      keyboardResizeBy
     );
     if (delta === 0)
       return;
@@ -797,10 +839,10 @@ var LiveMotion = (() => {
       layout: initialLayout != null ? initialLayout : $prevLayout,
       paneConstraintsArray,
       pivotIndices,
-      trigger: "mouse-or-touch"
+      trigger: isKeyDown(event) ? "keyboard" : "mouse-or-touch"
     });
     const layoutChanged = !areArraysEqual($prevLayout, nextLayout);
-    if (isMouseEvent(event)) {
+    if (isMouseEvent(event) || isTouchEvent(event)) {
       const $prevDelta = groupData.prevDelta.get();
       if ($prevDelta != delta) {
         groupData.prevDelta.set(delta);
@@ -833,28 +875,65 @@ var LiveMotion = (() => {
     const index = getResizeHandleElementIndex(groupId, dragHandleId);
     return index != null ? [index, index + 1] : [-1, -1];
   }
-  function getDeltaPercentage(e, dragHandleId, dir, initialCursorPosition) {
-    if (initialCursorPosition == null)
-      return 0;
-    const isHorizontal = dir === "horizontal";
-    const handleElement = getResizeHandleElement(dragHandleId);
-    assert(handleElement);
-    const groupId = handleElement.getAttribute("data-pane-group-id");
-    assert(groupId);
-    const cursorPosition = getResizeEventCursorPosition(dir, e);
-    const groupElement = getPaneGroupElement(groupId);
-    assert(groupElement);
-    const groupRect = groupElement.getBoundingClientRect();
-    const groupSizeInPixels = isHorizontal ? groupRect.width : groupRect.height;
-    const offsetPixels = cursorPosition - initialCursorPosition;
-    const offsetPercentage = offsetPixels / groupSizeInPixels * 100;
-    return offsetPercentage;
+  function getDeltaPercentage(e, dragHandleId, dir, initialCursorPosition, keyboardResizeBy) {
+    if (isKeyDown(e)) {
+      const isHorizontal = dir === "horizontal";
+      let delta = 0;
+      if (e.shiftKey) {
+        delta = 100;
+      } else if (keyboardResizeBy != null) {
+      } else {
+        delta = 5;
+      }
+      let movement = 0;
+      switch (e.key) {
+        case "ArrowDown":
+          movement = isHorizontal ? 0 : delta;
+          break;
+        case "ArrowLeft":
+          movement = isHorizontal ? -delta : 0;
+          break;
+        case "ArrowRight":
+          movement = isHorizontal ? delta : 0;
+          break;
+        case "ArrowUp":
+          movement = isHorizontal ? 0 : -delta;
+          break;
+        case "End":
+          movement = 100;
+          break;
+        case "Home":
+          movement = -100;
+          break;
+      }
+      return movement;
+    } else {
+      if (initialCursorPosition == null)
+        return 0;
+      const isHorizontal = dir === "horizontal";
+      const handleElement = getResizeHandleElement(dragHandleId);
+      assert(handleElement);
+      const groupId = handleElement.getAttribute("data-pane-group-id");
+      assert(groupId);
+      const cursorPosition = getResizeEventCursorPosition(dir, e);
+      const groupElement = getPaneGroupElement(groupId);
+      assert(groupElement);
+      const groupRect = groupElement.getBoundingClientRect();
+      const groupSizeInPixels = isHorizontal ? groupRect.width : groupRect.height;
+      const offsetPixels = cursorPosition - initialCursorPosition;
+      const offsetPercentage = offsetPixels / groupSizeInPixels * 100;
+      return offsetPercentage;
+    }
   }
   function getResizeEventCursorPosition(dir, e) {
     var _a;
     const isHorizontal = dir === "horizontal";
     if (isMouseEvent(e)) {
       return isHorizontal ? e.clientX : e.clientY;
+    } else if (isTouchEvent(e)) {
+      const firstTouch = e.touches[0];
+      assert(firstTouch);
+      return isHorizontal ? firstTouch.screenX : firstTouch.screenY;
     } else {
       throw Error(
         `Unsupported event type "${(_a = e.type) != null ? _a : "unknown"}"`
@@ -892,6 +971,26 @@ var LiveMotion = (() => {
       return element2;
     }
     return null;
+  }
+  function handleKeydown(groupId, resizeHandleId, disabled, resizeHandler2, event) {
+    if (disabled || !resizeHandler2 || event.defaultPrevented)
+      return;
+    const resizeKeys = ["ArrowDown", "ArrowLeft", "ArrowRight", "ArrowUp", "End", "Home"];
+    if (resizeKeys.includes(event.key)) {
+      event.preventDefault();
+      resizeHandler2(event);
+      return;
+    }
+    if (event.key !== "F6")
+      return;
+    event.preventDefault();
+    const handles = getResizeHandleElementsForGroup(groupId);
+    const index = getResizeHandleElementIndex(groupId, resizeHandleId);
+    if (index === null)
+      return;
+    const nextIndex = event.shiftKey ? index > 0 ? index - 1 : handles.length - 1 : index + 1 < handles.length ? index + 1 : 0;
+    const nextHandle = handles[nextIndex];
+    nextHandle.focus();
   }
 
   // js/live_pane/live_pane.ts
