@@ -2,7 +2,7 @@
 [![Elixir CI](https://github.com/giusdp/live_pane/actions/workflows/tests.yaml/badge.svg?branch=main)](https://github.com/giusdp/live_pane/actions/workflows/tests.yaml)
 [![Hex](https://img.shields.io/hexpm/v/live_pane)](https://hex.pm/packages/live_pane)
 
-A dependency-free client-side set of components to easily create resizable panels in your Phoenix LiveView applications.
+A client-side, dependency-free, set hooks and components to easily create resizable panels in your Phoenix applications.
 
 This project has taken a lot of inspiration and code from the work done by 
 [paneforge](https://.github.com/svecosystem/paneforge) and [react-resizable-panels](https://github.com/bvaughn/react-resizable-panels).
@@ -14,7 +14,7 @@ Add `live_pane` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:live_pane, "~> 0.1.0"}
+    {:live_pane, "~> 0.3.0"}
   ]
 end
 ```
@@ -106,11 +106,9 @@ Just make sure to set an `id` for the group and then use the same id in each pan
 - [x] Support nested groups
 - [x] Vertical orientation
 - [x] Collapsible panes 
-- [ ] Custom Styling
-- [ ] Client-side events (to LV) 
-- [ ] Server-side events (to JS) - to control programmatically collapse/expand
-- [ ] Keyboard support
+- [x] Keyboard support
 - [x] Touch support
+- [ ] Events
 - [ ] Save state
 - [ ] Documentation
 - [ ] Generate IDs in pane and resizer so we don't need to set them manually

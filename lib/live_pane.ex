@@ -17,23 +17,55 @@ defmodule LivePane do
   """
   use Phoenix.Component
 
-  attr :id, :string, required: true
-  attr :class, :string, default: ""
-  attr :direction, :string, values: ["horizontal", "vertical"], default: "horizontal"
+  attr :id, :string, required: true, doc: "The id of the group element."
+
+  attr :direction, :string,
+    values: ["horizontal", "vertical"],
+    default: "horizontal",
+    doc: "The direction of the panes."
+
+  attr :keyboard_resize_by, :integer,
+    doc:
+      "The amount of space to add to the pane group when the keyboard resize event is triggered."
+
+  attr :class, :string, default: "", doc: "Extra classes to apply to the group."
   attr :rest, :global
+
   slot :inner_block, required: true
 
+  @doc """
+  The group component wraps a collection of panes or nested groups and manages resize events via the "PaneGroup" JS hook.
+  """
   def group(assigns) do
+    class =
+      assigns.class <>
+        if assigns.direction == "vertical", do: " flex-col", else: " flex-row"
+
+    assigns =
+      assigns
+      |> assign(:class, class)
+      |> assign_new(:keyboard_resize_by, fn -> nil end)
+
     ~H"""
-    <.live_component module={LivePane.Group} id={@id} direction={@direction} class={@class} {@rest}>
+    <div
+      id={@id}
+      data-pane-group=""
+      data-pane-group-id={@id}
+      data-pane-direction={@direction}
+      phx-update="ignore"
+      phx-hook="live_pane_group"
+      class={["flex overflow-hidden items-center justify-center", @class]}
+      keyboard-resize-by={@keyboard_resize_by}
+      {@rest}
+    >
       {render_slot(@inner_block)}
-    </.live_component>
+    </div>
     """
   end
 
   attr :id, :string, required: true, doc: "The id of the pane element."
-  attr :group_id, :string, required: true, doc: "ID of the group this pane belongs to"
-  attr :class, :string, default: "", doc: "Extra classes to apply to the pane"
+  attr :group_id, :string, required: true, doc: "ID of the group this pane belongs to."
+  attr :class, :string, default: "", doc: "Extra classes to apply to the pane."
 
   attr :collapsed_size, :integer,
     default: 0,
@@ -63,49 +95,61 @@ defmodule LivePane do
   attr :rest, :global
   slot :inner_block, required: true
 
+  @doc """
+  The Pane component is used to create an individual pane within a PaneGroup.
+  """
   def pane(assigns) do
+    collapsible = if assigns.collapsible, do: "true", else: "false"
+    assigns = assign(assigns, :collapsible, collapsible)
+
     ~H"""
-    <.live_component
-      module={LivePane.Pane}
-      group_id={@group_id}
+    <div
       id={@id}
-      class={@class}
-      collapsed_size={@collapsed_size}
+      phx-update="ignore"
+      phx-hook="live_pane"
+      data-pane-group-id={@group_id}
+      collapsed-size={@collapsed_size}
       collapsible={@collapsible}
-      default_size={@default_size}
-      max_size={@max_size}
-      min_size={@min_size}
-      order={@order}
+      default-size={@default_size}
+      max-size={@max_size}
+      min-size={@min_size}
+      data-pane-order={@order}
+      class={@class}
       {@rest}
     >
       {render_slot(@inner_block)}
-    </.live_component>
+    </div>
     """
   end
 
-  attr :id, :string, required: true
-  attr :group_id, :string, required: true
-  attr :direction, :string, default: "horizontal"
-  attr :active, :string, default: "pointer"
-  attr :disabled, :boolean, default: false
-  attr :class, :string, default: ""
+  attr :id, :string, required: true, doc: "The id of the resize handle."
+  attr :group_id, :string, required: true, doc: "The ID of the pane group the handle belongs to."
+
+  attr :disabled, :boolean, default: false, doc: "Whether the resize handle is disabled."
+  attr :class, :string, default: "", doc: "Extra classes to apply to the handle."
   attr :rest, :global
+
   slot :inner_block
 
+  @doc """
+  The Resizer component is used to create a draggable handle between two panes that allows the user to resize them.
+  """
   def resizer(assigns) do
     ~H"""
-    <.live_component
-      module={LivePane.Resizer}
-      group_id={@group_id}
+    <div
       id={@id}
-      direction={@direction}
-      active={@active}
-      disabled={@disabled}
+      role="separator"
+      phx-update="ignore"
+      phx-hook="live_pane_resizer"
+      data-pane-resizer=""
+      data-pane-resizer-id={@id}
+      data-pane-group-id={@group_id}
+      data-pane-disabled={@disabled}
       class={@class}
       {@rest}
     >
       {render_slot(@inner_block)}
-    </.live_component>
+    </div>
     """
   end
 end

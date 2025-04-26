@@ -13,6 +13,16 @@ defmodule DemoWeb.Router do
   scope "/", DemoWeb do
     pipe_through :browser
 
-    live "/", HomeLive
+    get "/", PageController, :index
+    get "/group", PageController, :group
+    get "/pane", PageController, :pane
+    get "/resizer", PageController, :resizer
+    get "/horizontal", PageController, :horizontal
+    get "/vertical", PageController, :vertical
+    get "/nested", PageController, :nested
+    get "/overflowing", PageController, :overflowing
+    get "/collapsible", PageController, :collapsible
+    get "/conditional", PageController, :conditional
+    get "/persistent", PageController, :persistent
   end
 end
