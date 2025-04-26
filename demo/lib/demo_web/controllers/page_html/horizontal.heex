@@ -52,26 +52,27 @@
 
     <p class="not-prose p-2" tabindex="0" id="code"></p>
     <script type="module">
-      import { codeToHtml } from 'https://esm.sh/shiki@3.0.0'
+          import { codeToHtml } from 'https://esm.sh/shiki@3.0.0'
 
-      document.getElementById('code').innerHTML = await codeToHtml(`
-  <LivePane.group id="demo" direction="horizontal">
-    <LivePane.pane group_id="demo" id="demo_pane_1">
-        <!-- ... content here -->
-    </LivePane.pane>
+          document.getElementById('code').innerHTML = await codeToHtml(`
+      <LivePane.group id="demo" direction="horizontal">
+        <LivePane.pane group_id="demo" id="demo_pane_1">
+            <!-- ... content here -->
+        </LivePane.pane>
 
-    <LivePane.resizer id="demo-resizer" group_id="demo">
-      <!-- your handle here -->
-    </LivePane.resizer>
+        <LivePane.resizer id="demo-resizer" group_id="demo">
+          <!-- your handle here -->
+        </LivePane.resizer>
 
-    <LivePane.pane group_id="demo" id="demo_pane_2">
-        <!-- ... content here -->
-    </LivePane.pane>
-  </LivePane.group>
-              `, {
-                lang: 'elixir',
-                theme: 'rose-pine'
-              })
+        <LivePane.pane group_id="demo" id="demo_pane_2">
+            <!-- ... content here -->
+        </LivePane.pane>
+      </LivePane.group>
+                  `, {
+                    lang: 'elixir',
+                    theme: 'rose-pine'
+                  })
+        
     </script>
   </div>
 </div>
