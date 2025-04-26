@@ -64,8 +64,8 @@ defmodule LivePane do
   end
 
   attr :id, :string, required: true, doc: "The id of the pane element."
-  attr :group_id, :string, required: true, doc: "ID of the group this pane belongs to"
-  attr :class, :string, default: "", doc: "Extra classes to apply to the pane"
+  attr :group_id, :string, required: true, doc: "ID of the group this pane belongs to."
+  attr :class, :string, default: "", doc: "Extra classes to apply to the pane."
 
   attr :collapsed_size, :integer,
     default: 0,

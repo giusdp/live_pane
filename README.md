@@ -2,7 +2,7 @@
 [![Elixir CI](https://github.com/giusdp/live_pane/actions/workflows/tests.yaml/badge.svg?branch=main)](https://github.com/giusdp/live_pane/actions/workflows/tests.yaml)
 [![Hex](https://img.shields.io/hexpm/v/live_pane)](https://hex.pm/packages/live_pane)
 
-A dependency-free client-side set of components to easily create resizable panels in your Phoenix LiveView applications.
+A client-side, dependency-free, set hooks and components to easily create resizable panels in your Phoenix applications.
 
 This project has taken a lot of inspiration and code from the work done by 
 [paneforge](https://.github.com/svecosystem/paneforge) and [react-resizable-panels](https://github.com/bvaughn/react-resizable-panels).
