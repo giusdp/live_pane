@@ -32,6 +32,11 @@ export type PaneGroupData = {
   prevDelta: Writable<number>;
   keyboardResizeBy: number | null;
 
+  onLayoutChange?: (layout: number[]) => void;
+
+  paneIdToLastNotifiedSizeMap: Record<string, number>;
+  paneSizeBeforeCollapseMap: Map<string, number>;
+
   unsubFromPaneDataChange: Unsubscriber;
 };
 
@@ -62,3 +67,13 @@ export type ResizeEvent = KeyboardEvent | MouseEvent | TouchEvent;
 export type ResizeHandler = (event: ResizeEvent) => void;
 
 export type PaneResizeHandleOnDragging = (isDragging: boolean) => void;
+
+export type PaneOnCollapse = () => void;
+export type PaneOnExpand = () => void;
+export type PaneOnResize = (size: number, prevSize: number | undefined) => void;
+
+export type PaneGroupOnLayout = (layout: number[]) => void;
+
+export type CollapseEvent = {
+  paneId: string;
+};

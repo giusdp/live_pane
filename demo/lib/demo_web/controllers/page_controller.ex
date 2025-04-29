@@ -33,10 +33,6 @@ defmodule DemoWeb.PageController do
     render(conn, :overflowing)
   end
 
-  def collapsible(conn, _params) do
-    render(conn, :collapsible)
-  end
-
   def conditional(conn, _params) do
     render(conn, :conditional)
   end

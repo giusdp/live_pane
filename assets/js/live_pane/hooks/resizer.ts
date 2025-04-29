@@ -24,8 +24,6 @@ import { areArraysEqual } from '../compare';
 import { adjustLayoutByDelta } from '../adjust-layout';
 
 export function createResizerHook() {
-
-
   let resizerHook: Hook = {
     mounted() {
       // -- Retrieve data from group
@@ -64,7 +62,14 @@ export function createResizerHook() {
         thisResizerData.resizeHandlerCallback = (event: ResizeEvent) => {
           const cursorPos = dragState.get()?.initialCursorPosition ?? null;
           const initialLayout = dragState.get()?.initialLayout ?? null;
-          resizeHandler(groupId, groupData, initialLayout, cursorPos, keyboardResizeBy, event);
+          resizeHandler(
+            groupId,
+            groupData,
+            initialLayout,
+            cursorPos,
+            keyboardResizeBy,
+            event
+          );
         };
       }
 
@@ -87,8 +92,8 @@ export function createResizerHook() {
 
       this.el.style.cssText = style;
 
-      this.el.onblur = () => (thisResizerData.isFocused.set(false));
-      this.el.onfocus = () => (thisResizerData.isFocused.set(true));
+      this.el.onblur = () => thisResizerData.isFocused.set(false);
+      this.el.onfocus = () => thisResizerData.isFocused.set(true);
 
       this.el.onmousedown = e => {
         e.preventDefault();
@@ -136,7 +141,7 @@ export function createResizerHook() {
         );
       };
 
-      this.el.onkeydown = (e) => {
+      this.el.onkeydown = e => {
         handleKeydown(
           groupId,
           resizerId,
@@ -144,7 +149,7 @@ export function createResizerHook() {
           thisResizerData.resizeHandlerCallback,
           e
         );
-      }
+      };
     },
 
     destroyed() {
@@ -249,7 +254,7 @@ function resizeHandler(
     layout: initialLayout ?? $prevLayout,
     paneConstraintsArray,
     pivotIndices,
-    trigger: isKeyDown(event) ? "keyboard" : "mouse-or-touch",
+    trigger: isKeyDown(event) ? 'keyboard' : 'mouse-or-touch'
   });
 
   const layoutChanged = !areArraysEqual($prevLayout, nextLayout);
@@ -318,7 +323,7 @@ function getDeltaPercentage(
   keyboardResizeBy: number | null
 ): number {
   if (isKeyDown(e)) {
-    const isHorizontal = dir === "horizontal";
+    const isHorizontal = dir === 'horizontal';
 
     let delta = 0;
     if (e.shiftKey) {
@@ -330,22 +335,22 @@ function getDeltaPercentage(
 
     let movement = 0;
     switch (e.key) {
-      case "ArrowDown":
+      case 'ArrowDown':
         movement = isHorizontal ? 0 : delta;
         break;
-      case "ArrowLeft":
+      case 'ArrowLeft':
         movement = isHorizontal ? -delta : 0;
         break;
-      case "ArrowRight":
+      case 'ArrowRight':
         movement = isHorizontal ? delta : 0;
         break;
-      case "ArrowUp":
+      case 'ArrowUp':
         movement = isHorizontal ? 0 : -delta;
         break;
-      case "End":
+      case 'End':
         movement = 100;
         break;
-      case "Home":
+      case 'Home':
         movement = -100;
         break;
     }
@@ -437,10 +442,18 @@ function handleKeydown(
   resizeHandleId: ResizerId,
   disabled: boolean,
   resizeHandler: ResizeHandler | null,
-  event: KeyboardEvent) {
+  event: KeyboardEvent
+) {
   if (disabled || !resizeHandler || event.defaultPrevented) return;
 
-  const resizeKeys = ["ArrowDown", "ArrowLeft", "ArrowRight", "ArrowUp", "End", "Home"];
+  const resizeKeys = [
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowUp',
+    'End',
+    'Home'
+  ];
 
   if (resizeKeys.includes(event.key)) {
     event.preventDefault();
@@ -448,7 +461,7 @@ function handleKeydown(
     return;
   }
 
-  if (event.key !== "F6") return;
+  if (event.key !== 'F6') return;
 
   event.preventDefault();
 

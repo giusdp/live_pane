@@ -24,7 +24,9 @@ export function createGroupHook() {
 
       const dir = this.el.getAttribute('data-pane-direction') || 'horizontal';
       const keyboardResizeByAttr = this.el.getAttribute('keyboard-resize-by');
-      const keyboardResizeBy: number | null = keyboardResizeByAttr ? Number(keyboardResizeByAttr) : null;
+      const keyboardResizeBy: number | null = keyboardResizeByAttr
+        ? Number(keyboardResizeByAttr)
+        : null;
 
       const paneDataArray = writable<PaneData[]>([]);
       const paneDataArrayChanged = writable(false);
@@ -33,6 +35,9 @@ export function createGroupHook() {
       const layout = writable<number[]>([]);
       const prevDelta = writable<number>(0);
       const dragHandleId = '';
+
+      const paneIdToLastNotifiedSizeMap: Record<string, number> = {};
+      const paneSizeBeforeCollapseMap = new Map<string, number>();
 
       const unsubFromPaneDataChange = updateLayoutOnPaneDataChange(
         layout,
@@ -47,6 +52,8 @@ export function createGroupHook() {
         layout,
         prevDelta,
         keyboardResizeBy,
+        paneIdToLastNotifiedSizeMap,
+        paneSizeBeforeCollapseMap,
         unsubFromPaneDataChange
       };
 
