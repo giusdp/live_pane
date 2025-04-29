@@ -75,9 +75,9 @@ defmodule LivePane do
     default: false,
     doc: "Whether the pane can be collapsed."
 
-  attr :default_size, :integer,
+  attr :starting_size, :integer,
     default: nil,
-    doc: "The default size of the pane in percentage of the group's size."
+    doc: "The starting size of the pane in percentage of the group's size when it is rendered."
 
   attr :max_size, :integer,
     default: 100,
@@ -110,7 +110,7 @@ defmodule LivePane do
       data-pane-group-id={@group_id}
       collapsed-size={@collapsed_size}
       collapsible={@collapsible}
-      default-size={@default_size}
+      default-size={@starting_size}
       max-size={@max_size}
       min-size={@min_size}
       data-pane-order={@order}
