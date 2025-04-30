@@ -14,7 +14,7 @@ Add `live_pane` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:live_pane, "~> 0.3.0"}
+    {:live_pane, "~> 0.4.0"}
   ]
 end
 ```
@@ -108,7 +108,7 @@ Just make sure to set an `id` for the group and then use the same id in each pan
 - [x] Collapsible panes 
 - [x] Keyboard support
 - [x] Touch support
-- [ ] Events
-- [ ] Save state
-- [ ] Documentation
-- [ ] Generate IDs in pane and resizer so we don't need to set them manually
+- [x] Server-side events (collapse/expand)
+- [x] Documentation
+- [ ] Persistent layouts
+- [ ] Accessibility (aria data)

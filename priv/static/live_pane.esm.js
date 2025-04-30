@@ -123,6 +123,8 @@ function createGroupHook() {
       const layout = writable([]);
       const prevDelta = writable(0);
       const dragHandleId = "";
+      const paneIdToLastNotifiedSizeMap = {};
+      const paneSizeBeforeCollapseMap = /* @__PURE__ */ new Map();
       const unsubFromPaneDataChange = updateLayoutOnPaneDataChange(
         layout,
         paneDataArray,
@@ -136,6 +138,8 @@ function createGroupHook() {
         layout,
         prevDelta,
         keyboardResizeBy,
+        paneIdToLastNotifiedSizeMap,
+        paneSizeBeforeCollapseMap,
         unsubFromPaneDataChange
       };
       paneGroupInstances.set(this.el.id, groupData);
@@ -333,156 +337,6 @@ function computePaneFlexBoxStyle({
   });
 }
 
-// js/live_pane/hooks/pane.ts
-function createPaneHook() {
-  let paneHook = {
-    mounted() {
-      const groupId = this.el.getAttribute("data-pane-group-id");
-      if (!groupId) {
-        throw Error("data-pane-group-id must exist for pane components!");
-      }
-      const paneId = this.el.id;
-      if (!paneId) {
-        throw Error("Id must exist for pane components!");
-      }
-      const orderAttr = this.el.getAttribute("data-pane-order");
-      const order = orderAttr ? Number(orderAttr) : 0;
-      const groupData = paneGroupInstances.get(groupId);
-      if (!groupData) {
-        throw Error('Group with id "' + groupId + '" does not exist.');
-      }
-      const collapsedSize = Number(this.el.getAttribute("collapsed-size")) || 0;
-      const collapsible = this.el.getAttribute("collapsible") === "true";
-      const defaultSize = Number(this.el.getAttribute("default-size")) || void 0;
-      const maxSize = Number(this.el.getAttribute("max-size")) || 100;
-      const minSize = Number(this.el.getAttribute("min-size")) || 0;
-      const paneData = {
-        id: this.el.id,
-        order,
-        constraints: {
-          collapsedSize,
-          collapsible,
-          defaultSize,
-          maxSize,
-          minSize
-        }
-      };
-      registerPane(
-        paneData,
-        groupData.paneDataArray,
-        groupData.paneDataArrayChanged
-      );
-      const unsubs = setupReactivePaneStyle(
-        this.el,
-        groupData,
-        paneData,
-        void 0
-      );
-      paneInstances.set(paneId, {
-        groupId,
-        unsubs
-      });
-    },
-    destroyed() {
-      const { groupId, unsubs } = paneInstances.get(this.el.id);
-      for (const unsub of unsubs) {
-        unsub();
-      }
-      const groupData = paneGroupInstances.get(groupId);
-      unregisterPane(
-        this.el.id,
-        groupData.paneDataArray,
-        groupData.paneDataArrayChanged
-      );
-      paneInstances.delete(this.el.id);
-    }
-  };
-  return paneHook;
-}
-function registerPane(paneData, paneDataArray, paneDataArrayChanged) {
-  paneDataArray.update((curr) => {
-    const newArr = [...curr, paneData];
-    newArr.sort((paneA, paneB) => {
-      const orderA = paneA.order;
-      const orderB = paneB.order;
-      if (orderA == null && orderB == null) {
-        return 0;
-      } else if (orderA == null) {
-        return -1;
-      } else if (orderB == null) {
-        return 1;
-      } else {
-        return orderA - orderB;
-      }
-    });
-    return newArr;
-  });
-  paneDataArrayChanged.set(true);
-}
-function unregisterPane(paneId, paneDataArray, paneDataArrayChanged) {
-  const $paneDataArray = paneDataArray.get();
-  const index = findPaneDataIndex($paneDataArray, paneId);
-  if (index < 0)
-    return;
-  paneDataArray.update((curr) => {
-    curr.splice(index, 1);
-    paneDataArrayChanged.set(true);
-    return curr;
-  });
-}
-function findPaneDataIndex(paneDataArray, paneDataId) {
-  return paneDataArray.findIndex(
-    (prevPaneData) => prevPaneData.id === paneDataId
-  );
-}
-function setupReactivePaneStyle(el, groupData, paneData, defaultSize) {
-  const getPaneStyle = () => {
-    const paneIndex = findPaneDataIndex(
-      groupData.paneDataArray.get(),
-      paneData.id
-    );
-    return computePaneFlexBoxStyle({
-      defaultSize,
-      dragState: dragState.get(),
-      layout: groupData.layout.get(),
-      paneData: groupData.paneDataArray.get(),
-      paneIndex
-    });
-  };
-  const arrUnsub = groupData.paneDataArray.subscribe(
-    (_) => el.style.cssText = getPaneStyle()
-  );
-  const layoutUnsub = groupData.layout.subscribe((_) => {
-    el.style.cssText = getPaneStyle();
-  });
-  const dragStateUnsub = dragState.subscribe(
-    (_) => el.style.cssText = getPaneStyle()
-  );
-  return [arrUnsub, layoutUnsub, dragStateUnsub];
-}
-
-// js/live_pane/chain.ts
-function chain(...callbacks) {
-  return (...args) => {
-    for (const callback of callbacks) {
-      if (typeof callback === "function") {
-        callback(...args);
-      }
-    }
-  };
-}
-
-// js/live_pane/event.ts
-function addEventListener(target, event, handler, options) {
-  const events = Array.isArray(event) ? event : [event];
-  events.forEach((_event) => target.addEventListener(_event, handler, options));
-  return () => {
-    events.forEach(
-      (_event) => target.removeEventListener(_event, handler, options)
-    );
-  };
-}
-
 // js/live_pane/adjust-layout.ts
 function adjustLayoutByDelta({
   delta,
@@ -633,6 +487,245 @@ function adjustLayoutByDelta({
   return nextLayout;
 }
 
+// js/live_pane/hooks/pane.ts
+function createPaneHook() {
+  let paneHook = {
+    mounted() {
+      const groupId = this.el.getAttribute("data-pane-group-id");
+      if (!groupId) {
+        throw Error("data-pane-group-id must exist for pane components!");
+      }
+      const paneId = this.el.id;
+      if (!paneId) {
+        throw Error("Id must exist for pane components!");
+      }
+      const orderAttr = this.el.getAttribute("data-pane-order");
+      const order = orderAttr ? Number(orderAttr) : 0;
+      const groupData = paneGroupInstances.get(groupId);
+      if (!groupData) {
+        throw Error('Group with id "' + groupId + '" does not exist.');
+      }
+      const collapsedSize = Number(this.el.getAttribute("collapsed-size")) || 0;
+      const collapsible = this.el.getAttribute("collapsible") === "true";
+      const defaultSize = Number(this.el.getAttribute("default-size")) || void 0;
+      const maxSize = Number(this.el.getAttribute("max-size")) || 100;
+      const minSize = Number(this.el.getAttribute("min-size")) || 0;
+      const paneData = {
+        id: this.el.id,
+        order,
+        constraints: {
+          collapsedSize,
+          collapsible,
+          defaultSize,
+          maxSize,
+          minSize
+        }
+      };
+      registerPane(
+        paneData,
+        groupData.paneDataArray,
+        groupData.paneDataArrayChanged
+      );
+      const unsubs = setupReactivePaneStyle(
+        this.el,
+        groupData,
+        paneData,
+        defaultSize
+      );
+      paneInstances.set(paneId, { groupId, unsubs });
+      this.handleEvent("collapse", ({ pane_id }) => {
+        if (paneId === pane_id) {
+          collapsePane(paneData, groupData);
+        }
+      });
+      this.handleEvent("expand", ({ pane_id }) => {
+        if (paneId === pane_id) {
+          expandPane(paneData, groupData);
+        }
+      });
+    },
+    destroyed() {
+      const { groupId, unsubs } = paneInstances.get(this.el.id);
+      for (const unsub of unsubs) {
+        unsub();
+      }
+      const groupData = paneGroupInstances.get(groupId);
+      unregisterPane(
+        this.el.id,
+        groupData.paneDataArray,
+        groupData.paneDataArrayChanged
+      );
+      paneInstances.delete(this.el.id);
+    }
+  };
+  return paneHook;
+}
+function registerPane(paneData, paneDataArray, paneDataArrayChanged) {
+  paneDataArray.update((curr) => {
+    const newArr = [...curr, paneData];
+    newArr.sort((paneA, paneB) => {
+      const orderA = paneA.order;
+      const orderB = paneB.order;
+      if (orderA == null && orderB == null) {
+        return 0;
+      } else if (orderA == null) {
+        return -1;
+      } else if (orderB == null) {
+        return 1;
+      } else {
+        return orderA - orderB;
+      }
+    });
+    return newArr;
+  });
+  paneDataArrayChanged.set(true);
+}
+function unregisterPane(paneId, paneDataArray, paneDataArrayChanged) {
+  const $paneDataArray = paneDataArray.get();
+  const index = findPaneDataIndex($paneDataArray, paneId);
+  if (index < 0)
+    return;
+  paneDataArray.update((curr) => {
+    curr.splice(index, 1);
+    paneDataArrayChanged.set(true);
+    return curr;
+  });
+}
+function findPaneDataIndex(paneDataArray, paneDataId) {
+  return paneDataArray.findIndex(
+    (prevPaneData) => prevPaneData.id === paneDataId
+  );
+}
+function setupReactivePaneStyle(el, groupData, paneData, defaultSize) {
+  const getPaneStyle = () => {
+    const paneIndex = findPaneDataIndex(
+      groupData.paneDataArray.get(),
+      paneData.id
+    );
+    return computePaneFlexBoxStyle({
+      defaultSize,
+      dragState: dragState.get(),
+      layout: groupData.layout.get(),
+      paneData: groupData.paneDataArray.get(),
+      paneIndex
+    });
+  };
+  const arrUnsub = groupData.paneDataArray.subscribe(
+    (_) => el.style.cssText = getPaneStyle()
+  );
+  const layoutUnsub = groupData.layout.subscribe((_) => {
+    el.style.cssText = getPaneStyle();
+  });
+  const dragStateUnsub = dragState.subscribe(
+    (_) => el.style.cssText = getPaneStyle()
+  );
+  return [arrUnsub, layoutUnsub, dragStateUnsub];
+}
+function collapsePane(paneData, groupData) {
+  const prevLayout = groupData.layout.get();
+  const paneDataArray = groupData.paneDataArray.get();
+  if (!paneData.constraints.collapsible)
+    return;
+  const paneConstraintsArray = paneDataArray.map(
+    (paneData2) => paneData2.constraints
+  );
+  const {
+    collapsedSize = 0,
+    paneSize,
+    pivotIndices
+  } = paneDataHelper(paneDataArray, paneData, prevLayout);
+  assert(paneSize != null);
+  if (paneSize === collapsedSize)
+    return;
+  groupData.paneSizeBeforeCollapseMap.set(paneData.id, paneSize);
+  const isLastPane = findPaneDataIndex(paneDataArray, paneData.id) === paneDataArray.length - 1;
+  const delta = isLastPane ? paneSize - collapsedSize : collapsedSize - paneSize;
+  const nextLayout = adjustLayoutByDelta({
+    delta,
+    layout: prevLayout,
+    paneConstraintsArray,
+    pivotIndices,
+    trigger: "imperative-api"
+  });
+  if (areArraysEqual(prevLayout, nextLayout)) {
+    return;
+  }
+  groupData.layout.set(nextLayout);
+  const onLayout = groupData.onLayoutChange;
+  if (onLayout) {
+    onLayout(nextLayout);
+  }
+}
+function expandPane(paneData, groupData) {
+  const prevLayout = groupData.layout.get();
+  const paneDataArray = groupData.paneDataArray.get();
+  if (!paneData.constraints.collapsible)
+    return;
+  const paneConstraintsArray = paneDataArray.map(
+    (paneData2) => paneData2.constraints
+  );
+  const {
+    collapsedSize = 0,
+    paneSize,
+    minSize = 0,
+    pivotIndices
+  } = paneDataHelper(paneDataArray, paneData, prevLayout);
+  if (paneSize !== collapsedSize)
+    return;
+  const prevPaneSize = groupData.paneSizeBeforeCollapseMap.get(paneData.id);
+  const baseSize = prevPaneSize != null && prevPaneSize >= minSize ? prevPaneSize : minSize;
+  const isLastPane = findPaneDataIndex(paneDataArray, paneData.id) === paneDataArray.length - 1;
+  const delta = isLastPane ? paneSize - baseSize : baseSize - paneSize;
+  const nextLayout = adjustLayoutByDelta({
+    delta,
+    layout: prevLayout,
+    paneConstraintsArray,
+    pivotIndices,
+    trigger: "imperative-api"
+  });
+  if (areArraysEqual(prevLayout, nextLayout))
+    return;
+  groupData.layout.set(nextLayout);
+  groupData.onLayoutChange?.(nextLayout);
+}
+function paneDataHelper(paneDataArray, paneData, layout) {
+  const paneConstraintsArray = paneDataArray.map(
+    (paneData2) => paneData2.constraints
+  );
+  const paneIndex = findPaneDataIndex(paneDataArray, paneData.id);
+  const paneConstraints = paneConstraintsArray[paneIndex];
+  const isLastPane = paneIndex === paneDataArray.length - 1;
+  const pivotIndices = isLastPane ? [paneIndex - 1, paneIndex] : [paneIndex, paneIndex + 1];
+  const paneSize = layout[paneIndex];
+  return {
+    ...paneConstraints,
+    paneSize,
+    pivotIndices
+  };
+}
+
+// js/live_pane/chain.ts
+function chain(...callbacks) {
+  return (...args) => {
+    for (const callback of callbacks) {
+      if (typeof callback === "function") {
+        callback(...args);
+      }
+    }
+  };
+}
+
+// js/live_pane/event.ts
+function addEventListener(target, event, handler, options) {
+  const events = Array.isArray(event) ? event : [event];
+  events.forEach((_event) => target.addEventListener(_event, handler, options));
+  return () => {
+    events.forEach(
+      (_event) => target.removeEventListener(_event, handler, options)
+    );
+  };
+}
+
 // js/live_pane/hooks/resizer.ts
 function createResizerHook() {
   let resizerHook = {
@@ -657,7 +750,6 @@ function createResizerHook() {
         isFocused: writable(false)
       };
       resizerInstances.set(resizerId, thisResizerData);
-      groupData.dragHandleId = resizerId;
       thisResizerData.disabled.set(
         this.el.getAttribute("data-pane-disabled") === "true"
       );
@@ -666,7 +758,15 @@ function createResizerHook() {
         thisResizerData.resizeHandlerCallback = (event) => {
           const cursorPos = dragState.get()?.initialCursorPosition ?? null;
           const initialLayout = dragState.get()?.initialLayout ?? null;
-          resizeHandler(groupId, groupData, initialLayout, cursorPos, keyboardResizeBy, event);
+          resizeHandler(
+            groupId,
+            resizerId,
+            groupData,
+            initialLayout,
+            cursorPos,
+            keyboardResizeBy,
+            event
+          );
         };
       }
       const unsubEvents = setupResizeEvents(
@@ -690,7 +790,7 @@ function createResizerHook() {
         const nextDragState = startDragging(
           groupData.direction,
           groupData.layout,
-          groupData.dragHandleId,
+          resizerId,
           e
         );
         dragState.set(nextDragState);
@@ -718,7 +818,7 @@ function createResizerHook() {
         const nextDragState = startDragging(
           groupData.direction,
           groupData.layout,
-          groupData.dragHandleId,
+          resizerId,
           e
         );
         dragState.set(nextDragState);
@@ -778,15 +878,15 @@ function setupResizeEvents(resizerId, node, params) {
     addEventListener(window, "touchend", stopDraggingAndBlur)
   );
 }
-function resizeHandler(groupId, groupData, initialLayout, initialCursorPosition, keyboardResizeBy, event) {
+function resizeHandler(groupId, resizerId, groupData, initialLayout, initialCursorPosition, keyboardResizeBy, event) {
   event.preventDefault();
   const direction = groupData.direction.get();
   const $prevLayout = groupData.layout.get();
   const $paneDataArray = groupData.paneDataArray.get();
-  const pivotIndices = getPivotIndices(groupId, groupData.dragHandleId);
+  const pivotIndices = getPivotIndices(groupId, resizerId);
   let delta = getDeltaPercentage(
     event,
-    groupData.dragHandleId,
+    resizerId,
     direction,
     initialCursorPosition,
     keyboardResizeBy
@@ -940,7 +1040,14 @@ function getPaneGroupElement(id) {
 function handleKeydown(groupId, resizeHandleId, disabled, resizeHandler2, event) {
   if (disabled || !resizeHandler2 || event.defaultPrevented)
     return;
-  const resizeKeys = ["ArrowDown", "ArrowLeft", "ArrowRight", "ArrowUp", "End", "Home"];
+  const resizeKeys = [
+    "ArrowDown",
+    "ArrowLeft",
+    "ArrowRight",
+    "ArrowUp",
+    "End",
+    "Home"
+  ];
   if (resizeKeys.includes(event.key)) {
     event.preventDefault();
     resizeHandler2(event);

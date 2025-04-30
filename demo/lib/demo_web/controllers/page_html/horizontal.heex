@@ -50,29 +50,26 @@
 
     <h2 class="mt-12 scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0">Anatomy</h2>
 
-    <p class="not-prose p-2" tabindex="0" id="code"></p>
-    <script type="module">
-          import { codeToHtml } from 'https://esm.sh/shiki@3.0.0'
+    <div id="anatomy" phx-hook="Highlight" phx-update="ignore" class="bg-inherit">
+      <pre class="p-0 bg-inherit">
+          <code class="language-elixir p-0" id="code">
+          <%="""
+          <LivePane.group id="demo" direction="horizontal">
+            <LivePane.pane group_id="demo" id="demo_pane_1">
+              <!-- ... content here -->
+            </LivePane.pane>
 
-          document.getElementById('code').innerHTML = await codeToHtml(`
-      <LivePane.group id="demo" direction="horizontal">
-        <LivePane.pane group_id="demo" id="demo_pane_1">
-            <!-- ... content here -->
-        </LivePane.pane>
+            <LivePane.resizer id="demo-resizer" group_id="demo">
+              <!-- your handle here -->
+            </LivePane.resizer>
 
-        <LivePane.resizer id="demo-resizer" group_id="demo">
-          <!-- your handle here -->
-        </LivePane.resizer>
-
-        <LivePane.pane group_id="demo" id="demo_pane_2">
-            <!-- ... content here -->
-        </LivePane.pane>
-      </LivePane.group>
-                  `, {
-                    lang: 'elixir',
-                    theme: 'rose-pine'
-                  })
-        
-    </script>
+            <LivePane.pane group_id="demo" id="demo_pane_2">
+              <!-- ... content here -->
+            </LivePane.pane>
+          </LivePane.group>
+          """%>
+</code>
+</pre>
+    </div>
   </div>
 </div>

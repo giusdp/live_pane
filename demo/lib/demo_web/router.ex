@@ -21,8 +21,9 @@ defmodule DemoWeb.Router do
     get "/vertical", PageController, :vertical
     get "/nested", PageController, :nested
     get "/overflowing", PageController, :overflowing
-    get "/collapsible", PageController, :collapsible
-    get "/conditional", PageController, :conditional
+
+    live "/collapsible", CollapsibleLive, :collapsible
+    live "/conditional", ConditionalLive, :conditional
     get "/persistent", PageController, :persistent
   end
 end

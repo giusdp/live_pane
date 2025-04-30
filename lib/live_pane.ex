@@ -52,7 +52,6 @@ defmodule LivePane do
       data-pane-group=""
       data-pane-group-id={@id}
       data-pane-direction={@direction}
-      phx-update="ignore"
       phx-hook="live_pane_group"
       class={["flex overflow-hidden items-center justify-center", @class]}
       keyboard-resize-by={@keyboard_resize_by}
@@ -75,9 +74,9 @@ defmodule LivePane do
     default: false,
     doc: "Whether the pane can be collapsed."
 
-  attr :default_size, :integer,
+  attr :starting_size, :integer,
     default: nil,
-    doc: "The default size of the pane in percentage of the group's size."
+    doc: "The starting size of the pane in percentage of the group's size when it is rendered."
 
   attr :max_size, :integer,
     default: 100,
@@ -105,12 +104,11 @@ defmodule LivePane do
     ~H"""
     <div
       id={@id}
-      phx-update="ignore"
       phx-hook="live_pane"
       data-pane-group-id={@group_id}
       collapsed-size={@collapsed_size}
       collapsible={@collapsible}
-      default-size={@default_size}
+      default-size={@starting_size}
       max-size={@max_size}
       min-size={@min_size}
       data-pane-order={@order}
@@ -139,7 +137,6 @@ defmodule LivePane do
     <div
       id={@id}
       role="separator"
-      phx-update="ignore"
       phx-hook="live_pane_resizer"
       data-pane-resizer=""
       data-pane-resizer-id={@id}

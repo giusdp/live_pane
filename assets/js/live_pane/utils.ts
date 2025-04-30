@@ -1,6 +1,6 @@
 import type { ResizeEvent } from './core';
 
-export function noop() { }
+export function noop() {}
 
 export function assert(
   expectedCondition: any,
@@ -39,5 +39,5 @@ export function isTouchEvent(event: ResizeEvent): event is TouchEvent {
 }
 
 export function isKeyDown(event: ResizeEvent): event is KeyboardEvent {
-  return event.type === "keydown";
+  return event.type === 'keydown';
 }

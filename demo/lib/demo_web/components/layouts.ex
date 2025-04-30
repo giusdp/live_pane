@@ -23,7 +23,7 @@ defmodule DemoWeb.Layouts do
       <div class="pointer-events-none absolute z-[-1] h-full w-full bg-white shadow-[0_2px_4px_rgba(0,0,0,.02),0_1px_0_rgba(0,0,0,.06)]">
       </div>
       <nav class="mx-auto flex h-[50px] max-w-[90rem] items-center justify-end gap-2 pl-[max(env(safe-area-inset-left),1.5rem)] pr-[max(env(safe-area-inset-right),1.5rem)]">
-        <.link class="flex items-center hover:opacity-75 font-semibold" navigate="/">
+        <.link class="flex items-center hover:opacity-75 font-semibold" href="/">
           Live Pane
         </.link>
         <div class="grow"></div>
@@ -64,7 +64,7 @@ defmodule DemoWeb.Layouts do
               <ul class="space-y-6 border-l border-border lg:space-y-2">
                 <div class="space-y-6 lg:space-y-2">
                   <li>
-                    <.link navigate={~p"/"} class="-ml-px block border-l pl-4">
+                    <.link href={~p"/"} class="-ml-px block border-l pl-4">
                       Introduction
                     </.link>
                   </li>
@@ -80,13 +80,13 @@ defmodule DemoWeb.Layouts do
               <ul class="space-y-6 border-l border-border lg:space-y-2">
                 <div class="space-y-6 lg:space-y-2">
                   <li>
-                    <.link navigate={~p"/group"} class="-ml-px block border-l pl-4">
+                    <.link href={~p"/group"} class="-ml-px block border-l pl-4">
                       Group
                     </.link>
                   </li>
                   <li>
                     <.link
-                      navigate={~p"/pane"}
+                      href={~p"/pane"}
                       class="-ml-px block border-l pl-4 border-border text-muted-foreground hover:border-primary hover:text-primary"
                     >
                       Pane
@@ -94,7 +94,7 @@ defmodule DemoWeb.Layouts do
                   </li>
                   <li>
                     <.link
-                      navigate={~p"/resizer"}
+                      href={~p"/resizer"}
                       class="-ml-px block border-l pl-4 border-border text-muted-foreground hover:border-primary hover:text-primary"
                     >
                       Resizer
@@ -112,13 +112,13 @@ defmodule DemoWeb.Layouts do
               <ul class="space-y-6 border-l border-border lg:space-y-2">
                 <div class="space-y-6 lg:space-y-2">
                   <li>
-                    <.link navigate={~p"/horizontal"} class="-ml-px block border-l pl-4">
+                    <.link href={~p"/horizontal"} class="-ml-px block border-l pl-4">
                       Horizontal
                     </.link>
                   </li>
                   <li>
                     <.link
-                      navigate={~p"/vertical"}
+                      href={~p"/vertical"}
                       class="-ml-px block border-l pl-4 border-border text-muted-foreground hover:border-primary hover:text-primary"
                     >
                       Vertical
@@ -126,7 +126,7 @@ defmodule DemoWeb.Layouts do
                   </li>
                   <li>
                     <.link
-                      navigate={~p"/nested"}
+                      href={~p"/nested"}
                       class="-ml-px block border-l pl-4 border-border text-muted-foreground hover:border-primary hover:text-primary"
                     >
                       Nested
@@ -134,7 +134,7 @@ defmodule DemoWeb.Layouts do
                   </li>
                   <li>
                     <.link
-                      navigate={~p"/overflowing"}
+                      href={~p"/overflowing"}
                       class="-ml-px block border-l pl-4 border-border text-muted-foreground hover:border-primary hover:text-primary"
                     >
                       Overflowing
@@ -142,7 +142,7 @@ defmodule DemoWeb.Layouts do
                   </li>
                   <li>
                     <.link
-                      navigate={~p"/collapsible"}
+                      href={~p"/collapsible"}
                       class="-ml-px block border-l pl-4 border-border text-muted-foreground hover:border-primary hover:text-primary"
                     >
                       Collapsible
@@ -150,7 +150,7 @@ defmodule DemoWeb.Layouts do
                   </li>
                   <li>
                     <.link
-                      navigate={~p"/conditional"}
+                      href={~p"/conditional"}
                       class="-ml-px block border-l pl-4 border-border text-muted-foreground hover:border-primary hover:text-primary"
                     >
                       Conditional
@@ -158,7 +158,7 @@ defmodule DemoWeb.Layouts do
                   </li>
                   <li>
                     <.link
-                      navigate={~p"/persistent"}
+                      href={~p"/persistent"}
                       class="-ml-px block border-l pl-4 border-border text-muted-foreground hover:border-primary hover:text-primary"
                     >
                       Persistent

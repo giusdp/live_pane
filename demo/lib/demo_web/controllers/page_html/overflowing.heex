@@ -9,24 +9,22 @@
     </p>
   </header>
 
-  <div class="markdown prose relative max-w-3xl pt-4  ">
+  <div class="markdown prose relative max-w-3xl pt-4">
     <LivePane.group
       id="demo"
       direction="horizontal"
       class="h-[450px] border-2 border-gray-300 rounded-lg"
     >
       <LivePane.pane group_id="demo" id="demo_pane_1" class="h-full">
-        <div class="flex h-[400px] items-center justify-center rounded-lg bg-muted">
-          <div class="h-full overflow-auto p-6">
-            Lorem ipsum dolor, sit amet consectetur adipisicing elit. Fuga quaerat eos, saepe doloribus
-            facere fugiat! Magni consequatur a veniam quia. Exercitationem recusandae facilis cupiditate
-            repellendus quaerat tenetur minima veniam quia! Lorem ipsum dolor sit amet consectetur
-            adipisicing elit. Excepturi totam voluptates eveniet vel ab velit quas repudiandae quae
-            possimus ad, eligendi commodi perspiciatis nisi tempora vitae ratione non! Praesentium,
-            aliquam? Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia fuga harum odit
-            doloribus ea. Atque expedita repudiandae, provident suscipit dignissimos cupiditate itaque
-            beatae debitis autem animi qui, quas aspernatur impedit!
-          </div>
+        <div class="h-full overflow-auto p-6">
+          Lorem ipsum dolor, sit amet consectetur adipisicing elit. Fuga quaerat eos, saepe doloribus
+          facere fugiat! Magni consequatur a veniam quia. Exercitationem recusandae facilis cupiditate
+          repellendus quaerat tenetur minima veniam quia! Lorem ipsum dolor sit amet consectetur
+          adipisicing elit. Excepturi totam voluptates eveniet vel ab velit quas repudiandae quae
+          possimus ad, eligendi commodi perspiciatis nisi tempora vitae ratione non! Praesentium,
+          aliquam? Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia fuga harum odit
+          doloribus ea. Atque expedita repudiandae, provident suscipit dignissimos cupiditate itaque
+          beatae debitis autem animi qui, quas aspernatur impedit!
         </div>
       </LivePane.pane>
 
@@ -107,47 +105,43 @@
 
     <h2 class="mt-12 scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0">Anatomy</h2>
 
-    <p class="not-prose p-2" tabindex="0" id="code"></p>
-
-    <script type="module">
-          import { codeToHtml } from 'https://esm.sh/shiki@3.0.0'
-
-          document.getElementById('code').innerHTML = await codeToHtml(`
-      <LivePane.group id="demo">
-        <LivePane.pane group_id="demo" id="demo_pane_1">
-          <div class="overflow-auto">
-            <!-- ... content here -->
-          </div>
-        </LivePane.pane>
-
-        <LivePane.resizer id="demo-resizer" group_id="demo">
-          <!-- your handle here -->
-        </LivePane.resizer>
-
-        <LivePane.pane group_id="demo" id="demo_pane_2">
-          <LivePane.group id="innerdemo" direction="vertical">
-            <LivePane.pane group_id="innerdemo" id="innerdemo_pane_1"
+    <div id="anatomy" phx-hook="Highlight" phx-update="ignore" class="bg-inherit">
+      <pre class="p-0 bg-inherit">
+          <code class="language-elixir p-0" id="code">
+          <%="""
+          <LivePane.group id="demo">
+            <LivePane.pane group_id="demo" id="demo_pane_1">
               <div class="overflow-auto">
                 <!-- ... content here -->
               </div>
             </LivePane.pane>
 
-            <LivePane.resizer id="innerdemo-resizer" group_id="innerdemo">
+            <LivePane.resizer id="demo-resizer" group_id="demo">
               <!-- your handle here -->
             </LivePane.resizer>
-            <LivePane.pane group_id="innerdemo" id="innerdemo_pane_2"
-              <div class="overflow-auto">
-                <!-- ... content here -->
-              </div>
+
+            <LivePane.pane group_id="demo" id="demo_pane_2">
+              <LivePane.group id="innerdemo" direction="vertical">
+                <LivePane.pane group_id="innerdemo" id="innerdemo_pane_1"
+                  <div class="overflow-auto">
+                    <!-- ... content here -->
+                  </div>
+                </LivePane.pane>
+
+                <LivePane.resizer id="innerdemo-resizer" group_id="innerdemo">
+                  <!-- your handle here -->
+                </LivePane.resizer>
+                <LivePane.pane group_id="innerdemo" id="innerdemo_pane_2"
+                  <div class="overflow-auto">
+                    <!-- ... content here -->
+                  </div>
+                </LivePane.pane>
+              </LivePane.group>
             </LivePane.pane>
           </LivePane.group>
-        </LivePane.pane>
-      </LivePane.group>
-                  `, {
-                    lang: 'elixir',
-                    theme: 'rose-pine'
-                  })
-        
-    </script>
+          """%>
+</code>
+</pre>
+    </div>
   </div>
 </div>

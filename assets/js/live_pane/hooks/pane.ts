@@ -1,8 +1,17 @@
 import { Hook } from 'phoenix_live_view';
-import { PaneData, PaneGroupData, PaneId, paneInstances } from '../core';
+import {
+  CollapseEvent,
+  PaneData,
+  PaneGroupData,
+  PaneId,
+  paneInstances
+} from '../core';
 import { Writable } from '../store';
 import { dragState, paneGroupInstances } from '../core';
 import { computePaneFlexBoxStyle } from '../style';
+import { assert } from '../utils';
+import { adjustLayoutByDelta } from '../adjust-layout';
+import { areArraysEqual } from '../compare';
 
 export function createPaneHook() {
   let paneHook: Hook = {
@@ -52,11 +61,19 @@ export function createPaneHook() {
         this.el,
         groupData,
         paneData,
-        undefined
+        defaultSize
       );
-      paneInstances.set(paneId, {
-        groupId,
-        unsubs
+      paneInstances.set(paneId, { groupId, unsubs });
+
+      this.handleEvent('collapse', ({ pane_id }: { pane_id: string }) => {
+        if (paneId === pane_id) {
+          collapsePane(paneData, groupData);
+        }
+      });
+      this.handleEvent('expand', ({ pane_id }: { pane_id: string }) => {
+        if (paneId === pane_id) {
+          expandPane(paneData, groupData);
+        }
       });
     },
 
@@ -157,4 +174,121 @@ function setupReactivePaneStyle(
   );
 
   return [arrUnsub, layoutUnsub, dragStateUnsub];
+}
+
+function collapsePane(paneData: PaneData, groupData: PaneGroupData) {
+  const prevLayout = groupData.layout.get();
+  const paneDataArray = groupData.paneDataArray.get();
+
+  if (!paneData.constraints.collapsible) return;
+
+  const paneConstraintsArray = paneDataArray.map(
+    paneData => paneData.constraints
+  );
+
+  const {
+    collapsedSize = 0,
+    paneSize,
+    pivotIndices
+  } = paneDataHelper(paneDataArray, paneData, prevLayout);
+
+  assert(paneSize != null);
+
+  if (paneSize === collapsedSize) return;
+
+  // Store the size before collapse, which is returned when `expand()` is called
+  groupData.paneSizeBeforeCollapseMap.set(paneData.id, paneSize);
+
+  const isLastPane =
+    findPaneDataIndex(paneDataArray, paneData.id) === paneDataArray.length - 1;
+  const delta = isLastPane
+    ? paneSize - collapsedSize
+    : collapsedSize - paneSize;
+
+  const nextLayout = adjustLayoutByDelta({
+    delta,
+    layout: prevLayout,
+    paneConstraintsArray,
+    pivotIndices,
+    trigger: 'imperative-api'
+  });
+
+  if (areArraysEqual(prevLayout, nextLayout)) {
+    return;
+  }
+
+  groupData.layout.set(nextLayout);
+  const onLayout = groupData.onLayoutChange;
+
+  if (onLayout) {
+    onLayout(nextLayout);
+  }
+}
+
+function expandPane(paneData: PaneData, groupData: PaneGroupData) {
+  const prevLayout = groupData.layout.get();
+  const paneDataArray = groupData.paneDataArray.get();
+
+  if (!paneData.constraints.collapsible) return;
+  const paneConstraintsArray = paneDataArray.map(
+    paneData => paneData.constraints
+  );
+
+  const {
+    collapsedSize = 0,
+    paneSize,
+    minSize = 0,
+    pivotIndices
+  } = paneDataHelper(paneDataArray, paneData, prevLayout);
+
+  if (paneSize !== collapsedSize) return;
+  // Restore this pane to the size it was before it was collapsed, if possible.
+  const prevPaneSize = groupData.paneSizeBeforeCollapseMap.get(paneData.id);
+  const baseSize =
+    prevPaneSize != null && prevPaneSize >= minSize ? prevPaneSize : minSize;
+
+  const isLastPane =
+    findPaneDataIndex(paneDataArray, paneData.id) === paneDataArray.length - 1;
+
+  const delta = isLastPane ? paneSize - baseSize : baseSize - paneSize;
+
+  const nextLayout = adjustLayoutByDelta({
+    delta,
+    layout: prevLayout,
+    paneConstraintsArray,
+    pivotIndices,
+    trigger: 'imperative-api'
+  });
+
+  if (areArraysEqual(prevLayout, nextLayout)) return;
+
+  groupData.layout.set(nextLayout);
+
+  groupData.onLayoutChange?.(nextLayout);
+}
+
+function paneDataHelper(
+  paneDataArray: PaneData[],
+  paneData: PaneData,
+  layout: number[]
+) {
+  const paneConstraintsArray = paneDataArray.map(
+    paneData => paneData.constraints
+  );
+
+  const paneIndex = findPaneDataIndex(paneDataArray, paneData.id);
+  const paneConstraints = paneConstraintsArray[paneIndex];
+
+  const isLastPane = paneIndex === paneDataArray.length - 1;
+  const pivotIndices = isLastPane
+    ? [paneIndex - 1, paneIndex]
+    : [paneIndex, paneIndex + 1];
+
+  const paneSize = layout[paneIndex];
+
+  return {
+    ...paneConstraints,
+    paneSize,
+    pivotIndices
+  };
 }
