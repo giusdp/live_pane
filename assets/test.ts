@@ -8,12 +8,18 @@ class ViewHookTest {
         }
     }
 
+    handleEvent(eventName, callback) {
+        this.__callbacks[eventName] = callback
+    }
+
     trigger(callbackName) {
         this.__callbacks[callbackName].bind(this)()
     }
 
-    pushEvent(_event, _payload) { }
-    pushEvent(_target, _event, _payload) { }
+    pushEvent(eventName, payload) {
+        const cb = this.__callbacks[eventName]
+        cb(payload)
+    }
 
     element() {
         return this.el

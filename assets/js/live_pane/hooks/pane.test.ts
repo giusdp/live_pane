@@ -132,3 +132,52 @@ test('Pane is added to paneInstances', t => {
   paneHook.trigger('destroyed');
   t.falsy(paneInstances.has('pane1'));
 });
+
+test('Sending collapse event collapses the pane', t => {
+  const groupHook = renderHook('<div id="f">group</div>', createGroupHook());
+  groupHook.trigger('mounted');
+
+  const paneHook = renderHook(
+    '<div data-pane-group-id="f" id="pane1" order=1 collapsible="true" collapsed-size="20">pane</div>',
+    createPaneHook()
+  );
+  paneHook.trigger('mounted');
+
+  renderHook(
+    '<div data-pane-group-id="f" id="pane2" order=2>pane</div>',
+    createPaneHook()
+  ).trigger('mounted');
+
+  const oldLayout = paneGroupInstances.get('f')!.layout.get();
+  t.deepEqual(oldLayout, [50, 50]);
+  paneHook.pushEvent('collapse', { pane_id: 'pane1' });
+
+  const newLayout = paneGroupInstances.get('f')!.layout.get();
+  t.deepEqual(newLayout, [20, 80]);
+});
+
+test('Sending expand event expands the pane', t => {
+  const groupHook = renderHook('<div id="g">group</div>', createGroupHook());
+  groupHook.trigger('mounted');
+
+  const paneHook = renderHook(
+    '<div data-pane-group-id="g" id="gpane1" order=1 collapsible="true" collapsed-size="20" default-size="40">pane</div>',
+    createPaneHook()
+  );
+  paneHook.trigger('mounted');
+
+  renderHook(
+    '<div data-pane-group-id="g" id="gpane2" order=2>pane</div>',
+    createPaneHook()
+  ).trigger('mounted');
+
+  paneHook.pushEvent('collapse', { pane_id: 'gpane1' });
+
+  const collapsedLayout = paneGroupInstances.get('g')!.layout.get();
+  t.deepEqual(collapsedLayout, [20, 80]);
+
+
+  paneHook.pushEvent('expand', { pane_id: 'gpane1' });
+  const expandedLayout = paneGroupInstances.get('g')!.layout.get();
+  t.deepEqual(expandedLayout, [40, 60]);
+});
