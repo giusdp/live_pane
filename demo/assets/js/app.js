@@ -3,6 +3,7 @@ import "phoenix_html"
 import { Socket } from "phoenix"
 import { LiveSocket } from "phoenix_live_view"
 
+import hljs from 'highlight.js';
 import { createLivePaneHooks } from '../../../assets/js/live_pane';
 
 const { groupHook, paneHook, resizerHook } = createLivePaneHooks()
@@ -10,6 +11,15 @@ let Hooks = {}
 Hooks.live_pane_group = groupHook;
 Hooks.live_pane = paneHook;
 Hooks.live_pane_resizer = resizerHook;
+Hooks.Highlight = {
+  mounted() {
+    let codeBlock = this.el.querySelector("pre code");
+
+    if (codeBlock) {
+      hljs.highlightBlock(codeBlock);
+    }
+  },
+};
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
