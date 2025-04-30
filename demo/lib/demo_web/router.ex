@@ -23,7 +23,7 @@ defmodule DemoWeb.Router do
     get "/overflowing", PageController, :overflowing
 
     live "/collapsible", CollapsibleLive, :collapsible
-    get "/conditional", PageController, :conditional
+    live "/conditional", ConditionalLive, :conditional
     get "/persistent", PageController, :persistent
   end
 end
