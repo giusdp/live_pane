@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+- Add `collpase` and `expand` server-side events.
+- Fix handling of more than 2 panes and resizers in single group.
+- Fix docs examples.
+- Changed the attribute name `default_size` to `starting_size`.
 
 ## [v0.3.0] (2025-04-27)
 
