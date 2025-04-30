@@ -52,7 +52,6 @@ defmodule LivePane do
       data-pane-group=""
       data-pane-group-id={@id}
       data-pane-direction={@direction}
-      phx-update="ignore"
       phx-hook="live_pane_group"
       class={["flex overflow-hidden items-center justify-center", @class]}
       keyboard-resize-by={@keyboard_resize_by}
@@ -105,7 +104,6 @@ defmodule LivePane do
     ~H"""
     <div
       id={@id}
-      phx-update="ignore"
       phx-hook="live_pane"
       data-pane-group-id={@group_id}
       collapsed-size={@collapsed_size}
@@ -139,7 +137,6 @@ defmodule LivePane do
     <div
       id={@id}
       role="separator"
-      phx-update="ignore"
       phx-hook="live_pane_resizer"
       data-pane-resizer=""
       data-pane-resizer-id={@id}
