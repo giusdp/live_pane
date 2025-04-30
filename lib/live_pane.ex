@@ -28,7 +28,13 @@ defmodule LivePane do
     doc:
       "The amount of space to add to the pane group when the keyboard resize event is triggered."
 
+  attr :auto_save, :boolean,
+    doc:
+      "Whether to automatically save the pane size changes in local storage. It uses the `id` of the group as the key.",
+    default: false
+
   attr :class, :string, default: "", doc: "Extra classes to apply to the group."
+
   attr :rest, :global
 
   slot :inner_block, required: true
@@ -41,10 +47,13 @@ defmodule LivePane do
       assigns.class <>
         if assigns.direction == "vertical", do: " flex-col", else: " flex-row"
 
+    auto_save = if assigns.auto_save, do: "true", else: "false"
+
     assigns =
       assigns
       |> assign(:class, class)
       |> assign_new(:keyboard_resize_by, fn -> nil end)
+      |> assign(:auto_save, auto_save)
 
     ~H"""
     <div
@@ -55,6 +64,7 @@ defmodule LivePane do
       phx-hook="live_pane_group"
       class={["flex overflow-hidden items-center justify-center", @class]}
       keyboard-resize-by={@keyboard_resize_by}
+      auto-save={@auto_save}
       {@rest}
     >
       {render_slot(@inner_block)}

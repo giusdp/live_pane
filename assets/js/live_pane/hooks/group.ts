@@ -1,16 +1,21 @@
 import { Hook } from 'phoenix_live_view';
-import { Writable, writable } from '../store';
+import { Unsubscriber, Writable, writable } from '../store';
 import type {
   Direction,
   PaneData,
   PaneGroupData,
   PaneConstraints
 } from '../core';
-import { paneGroupInstances } from '../core';
+import { defaultStorage, paneGroupInstances } from '../core';
 
 import { areArraysEqual, areNumbersAlmostEqual } from '../compare';
 import { assert } from '../utils';
 import { resizePane } from '../resize';
+import {
+  loadPaneGroupState,
+  PaneGroupStorage,
+  updateStorageValues
+} from '../storage';
 
 export function createGroupHook() {
   let groupHook: Hook = {
@@ -28,33 +33,48 @@ export function createGroupHook() {
         ? Number(keyboardResizeByAttr)
         : null;
 
+      const autoSave = this.el.getAttribute('auto-save') === 'true';
+
       const paneDataArray = writable<PaneData[]>([]);
       const paneDataArrayChanged = writable(false);
 
       const direction = writable<Direction>(dir as Direction);
       const layout = writable<number[]>([]);
       const prevDelta = writable<number>(0);
-      const dragHandleId = '';
 
       const paneIdToLastNotifiedSizeMap: Record<string, number> = {};
-      const paneSizeBeforeCollapseMap = new Map<string, number>();
+      const paneSizeBeforeCollapseMap: Writable<Map<string, number>> = writable(
+        new Map<string, number>()
+      );
 
       const unsubFromPaneDataChange = updateLayoutOnPaneDataChange(
+        this.el.id,
         layout,
         paneDataArray,
-        paneDataArrayChanged
+        paneDataArrayChanged,
+        autoSave,
+        paneSizeBeforeCollapseMap
+      );
+
+      const unsubFromLayoutChange = saveStateOnLayoutChange(
+        this.el.id,
+        layout,
+        paneDataArray,
+        paneSizeBeforeCollapseMap,
+        autoSave
       );
       const groupData: PaneGroupData = {
         paneDataArray,
         paneDataArrayChanged,
         direction,
-        dragHandleId,
         layout,
         prevDelta,
         keyboardResizeBy,
         paneIdToLastNotifiedSizeMap,
         paneSizeBeforeCollapseMap,
-        unsubFromPaneDataChange
+        autoSave,
+        unsubFromPaneDataChange,
+        unsubFromLayoutChange
       };
 
       paneGroupInstances.set(this.el.id, groupData);
@@ -62,6 +82,7 @@ export function createGroupHook() {
 
     destroyed() {
       paneGroupInstances.get(this.el.id)?.unsubFromPaneDataChange();
+      paneGroupInstances.get(this.el.id)?.unsubFromLayoutChange();
       paneGroupInstances.delete(this.el.id);
     }
   };
@@ -69,10 +90,33 @@ export function createGroupHook() {
   return groupHook;
 }
 
-function updateLayoutOnPaneDataChange(
+function saveStateOnLayoutChange(
+  groupId: string,
   layout: Writable<number[]>,
   paneDataArray: Writable<PaneData[]>,
-  paneDataArrayChanged: Writable<boolean>
+  paneSizeBeforeCollapseMap: Writable<Map<string, number>>,
+  autoSave: boolean = false,
+  storage: PaneGroupStorage = defaultStorage
+): Unsubscriber {
+  return layout.subscribe(layout => {
+    if (!autoSave) return;
+    updateStorageValues({
+      saveId: groupId,
+      layout,
+      storage,
+      paneDataArrayStore: paneDataArray,
+      paneSizeBeforeCollapseStore: paneSizeBeforeCollapseMap
+    });
+  });
+}
+
+function updateLayoutOnPaneDataChange(
+  groupId: string,
+  layout: Writable<number[]>,
+  paneDataArray: Writable<PaneData[]>,
+  paneDataArrayChanged: Writable<boolean>,
+  autoSave: boolean = false,
+  paneSizeBeforeCollapseMap: Writable<Map<string, number>>
 ) {
   return paneDataArrayChanged.subscribe(changed => {
     if (!changed) return;
@@ -82,6 +126,16 @@ function updateLayoutOnPaneDataChange(
     const $paneDataArray = paneDataArray.get();
 
     let unsafeLayout: number[] | null = null;
+
+    if (autoSave) {
+      const state = loadPaneGroupState(groupId, $paneDataArray, defaultStorage);
+      if (state) {
+        paneSizeBeforeCollapseMap.set(
+          new Map(Object.entries(state.expandToSizes))
+        );
+        unsafeLayout = state.layout;
+      }
+    }
 
     if (unsafeLayout == null) {
       unsafeLayout = getUnsafeDefaultLayout({

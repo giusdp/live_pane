@@ -176,7 +176,6 @@ test('Sending expand event expands the pane', t => {
   const collapsedLayout = paneGroupInstances.get('g')!.layout.get();
   t.deepEqual(collapsedLayout, [20, 80]);
 
-
   paneHook.pushEvent('expand', { pane_id: 'gpane1' });
   const expandedLayout = paneGroupInstances.get('g')!.layout.get();
   t.deepEqual(expandedLayout, [40, 60]);

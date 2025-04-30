@@ -1,5 +1,7 @@
+import { initializeStorage, PaneGroupStorage } from './storage';
 import { Unsubscriber, writable, type Writable } from './store';
 
+export const LOCAL_STORAGE_DEBOUNCE_INTERVAL = 100;
 export const PRECISION = 10;
 
 export const paneGroupInstances = new Map<GroupId, PaneGroupData>();
@@ -31,12 +33,13 @@ export type PaneGroupData = {
   prevDelta: Writable<number>;
   keyboardResizeBy: number | null;
 
-  onLayoutChange?: (layout: number[]) => void;
-
   paneIdToLastNotifiedSizeMap: Record<string, number>;
-  paneSizeBeforeCollapseMap: Map<string, number>;
+  paneSizeBeforeCollapseMap: Writable<Map<string, number>>;
+
+  autoSave: boolean;
 
   unsubFromPaneDataChange: Unsubscriber;
+  unsubFromLayoutChange: Unsubscriber;
 };
 
 export type Direction = 'horizontal' | 'vertical';
@@ -71,8 +74,17 @@ export type PaneOnCollapse = () => void;
 export type PaneOnExpand = () => void;
 export type PaneOnResize = (size: number, prevSize: number | undefined) => void;
 
-export type PaneGroupOnLayout = (layout: number[]) => void;
-
 export type CollapseEvent = {
   paneId: string;
+};
+
+export const defaultStorage: PaneGroupStorage = {
+  getItem: (name: string) => {
+    initializeStorage(defaultStorage);
+    return defaultStorage.getItem(name);
+  },
+  setItem: (name: string, value: string) => {
+    initializeStorage(defaultStorage);
+    defaultStorage.setItem(name, value);
+  }
 };

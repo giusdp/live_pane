@@ -1,8 +1,9 @@
 import test from 'ava';
 import { renderHook } from '../../../test';
 import { createGroupHook } from './group';
-import { paneGroupInstances } from '../core';
+import { LOCAL_STORAGE_DEBOUNCE_INTERVAL, paneGroupInstances } from '../core';
 import { createPaneHook } from './pane';
+import { initializeStorage, type PaneGroupStorage } from '../storage';
 
 test('Mounting group registers it in the group instances map', t => {
   const groupHook = createGroupHook();
@@ -65,4 +66,40 @@ test('Destroying group removes it from the group instances map', t => {
 
   groupHook.trigger('destroyed');
   t.false(paneGroupInstances.has('d'));
+});
+
+test('Updating layout with save state active stores the state', t => {
+  const origLocalStorage = globalThis.localStorage;
+  const myStorage: Record<string, string> = {};
+  // @ts-ignore
+  globalThis.localStorage = {
+    getItem: (k: string) => {
+      t.is(k, 'livepane:e');
+      return myStorage[k] ?? null;
+    },
+    setItem: (k: string, v: string) => {
+      t.is(k, 'livepane:e');
+      t.is(v, '{"pane1,pane2":{"expandToSizes":{},"layout":[30,70]}}');
+      myStorage[k] = v;
+    }
+  };
+  const groupHook = renderHook(
+    '<div id="e" auto-save="true">group</div>',
+    createGroupHook()
+  );
+  groupHook.trigger('mounted');
+
+  const groupData = paneGroupInstances.get('e')!;
+
+  renderHook(
+    '<div data-pane-group-id="e" id="pane1">pane</div>',
+    createPaneHook()
+  ).trigger('mounted');
+
+  renderHook(
+    '<div data-pane-group-id="e" id="pane2">pane</div>',
+    createPaneHook()
+  ).trigger('mounted');
+
+  groupData.layout.set([30, 70]);
 });
