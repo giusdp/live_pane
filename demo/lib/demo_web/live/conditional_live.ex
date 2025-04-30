@@ -1,5 +1,4 @@
 defmodule DemoWeb.ConditionalLive do
-  alias Phoenix.LiveView.JS
   use DemoWeb, :live_view
 
   def mount(_params, _session, socket) do
