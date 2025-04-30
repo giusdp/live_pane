@@ -73,6 +73,8 @@ RUN npm install --prefix assets
 
 WORKDIR /app/demo
 
+RUN npm install --prefix assets
+
 # compile assets
 RUN mix assets.deploy
 
