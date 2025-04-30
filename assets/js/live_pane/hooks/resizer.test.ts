@@ -26,12 +26,11 @@ test('Mounting resizer without corresponding group throws error', t => {
   t.throws(() => hook.trigger('mounted'));
 });
 
-test('Mounting resizer with valid data registers it to its group data (sets dragHandleId)', t => {
+test('Mounting resizer with valid data registers it to its resizer data (sets dragHandleId)', t => {
   const groupHook = renderHook('<div id="a">group</div>', createGroupHook());
   groupHook.trigger('mounted');
 
-  const groupData = paneGroupInstances.get('a');
-  t.is(groupData!.dragHandleId, '');
+  t.false(resizerInstances.has('resizer1'));
 
   const resizerHook = renderHook(
     '<div data-pane-group-id="a" id="resizer1">resizer</div>',
@@ -39,7 +38,7 @@ test('Mounting resizer with valid data registers it to its group data (sets drag
   );
   resizerHook.trigger('mounted');
 
-  t.is(groupData!.dragHandleId, 'resizer1');
+  t.true(resizerInstances.has('resizer1'));
 });
 
 test('Mounting resizer registers it to the resizerInstances map', t => {

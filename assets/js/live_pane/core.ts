@@ -27,7 +27,6 @@ export type PaneGroupData = {
   paneDataArray: Writable<PaneData[]>;
   paneDataArrayChanged: Writable<boolean>;
   direction: Writable<Direction>;
-  dragHandleId: string;
   layout: Writable<number[]>;
   prevDelta: Writable<number>;
   keyboardResizeBy: number | null;

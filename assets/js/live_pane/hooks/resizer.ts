@@ -50,7 +50,6 @@ export function createResizerHook() {
       };
 
       resizerInstances.set(resizerId, thisResizerData);
-      groupData.dragHandleId = resizerId;
 
       // -- Prepare action params
       thisResizerData.disabled.set(
@@ -64,6 +63,7 @@ export function createResizerHook() {
           const initialLayout = dragState.get()?.initialLayout ?? null;
           resizeHandler(
             groupId,
+            resizerId,
             groupData,
             initialLayout,
             cursorPos,
@@ -100,7 +100,7 @@ export function createResizerHook() {
         const nextDragState = startDragging(
           groupData.direction,
           groupData.layout,
-          groupData.dragHandleId,
+          resizerId,
           e
         );
         dragState.set(nextDragState);
@@ -132,7 +132,7 @@ export function createResizerHook() {
         const nextDragState = startDragging(
           groupData.direction,
           groupData.layout,
-          groupData.dragHandleId,
+          resizerId,
           e
         );
         dragState.set(nextDragState);
@@ -217,6 +217,7 @@ function setupResizeEvents(
 
 function resizeHandler(
   groupId: GroupId,
+  resizerId: ResizerId,
   groupData: PaneGroupData,
   initialLayout: number[] | null,
   initialCursorPosition: number | null,
@@ -228,11 +229,11 @@ function resizeHandler(
   const direction = groupData.direction.get();
   const $prevLayout = groupData.layout.get();
   const $paneDataArray = groupData.paneDataArray.get();
-  const pivotIndices = getPivotIndices(groupId, groupData.dragHandleId);
+  const pivotIndices = getPivotIndices(groupId, resizerId);
 
   let delta = getDeltaPercentage(
     event,
-    groupData.dragHandleId,
+    resizerId,
     direction,
     initialCursorPosition,
     keyboardResizeBy
