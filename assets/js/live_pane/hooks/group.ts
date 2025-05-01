@@ -9,13 +9,14 @@ import type {
 import { defaultStorage, paneGroupInstances } from '../core';
 
 import { areArraysEqual, areNumbersAlmostEqual } from '../compare';
-import { assert } from '../utils';
+import { assert, isHTMLElement } from '../utils';
 import { resizePane } from '../resize';
 import {
   loadPaneGroupState,
   PaneGroupStorage,
   updateStorageValues
 } from '../storage';
+import { calculateAriaValues } from '../aria';
 
 export function createGroupHook() {
   let groupHook: Hook = {
@@ -63,6 +64,14 @@ export function createGroupHook() {
         paneSizeBeforeCollapseMap,
         autoSave
       );
+
+      const unsubFromUpdateAriaValues =
+        updateResizeHandleAriaValuesOnLayoutChange(
+          this.el.id,
+          layout,
+          paneDataArray
+        );
+
       const groupData: PaneGroupData = {
         paneDataArray,
         paneDataArrayChanged,
@@ -74,7 +83,8 @@ export function createGroupHook() {
         paneSizeBeforeCollapseMap,
         autoSave,
         unsubFromPaneDataChange,
-        unsubFromLayoutChange
+        unsubFromLayoutChange,
+        unsubFromUpdateAriaValues
       };
 
       paneGroupInstances.set(this.el.id, groupData);
@@ -83,6 +93,7 @@ export function createGroupHook() {
     destroyed() {
       paneGroupInstances.get(this.el.id)?.unsubFromPaneDataChange();
       paneGroupInstances.get(this.el.id)?.unsubFromLayoutChange();
+      paneGroupInstances.get(this.el.id)?.unsubFromUpdateAriaValues();
       paneGroupInstances.delete(this.el.id);
     }
   };
@@ -152,6 +163,39 @@ function updateLayoutOnPaneDataChange(
     if (areArraysEqual($prevLayout, nextLayout)) return;
 
     layout.set(nextLayout);
+  });
+}
+
+function updateResizeHandleAriaValuesOnLayoutChange(
+  groupId: string,
+  layout: Writable<number[]>,
+  paneDataArray: Writable<PaneData[]>
+): Unsubscriber {
+  return layout.subscribe(currentLayout => {
+    const resizeHandleElements = getResizeHandleElementsForGroup(groupId);
+    const paneDatas = paneDataArray.get();
+
+    for (let index = 0; index < paneDatas.length - 1; index++) {
+      const { valueMax, valueMin, valueNow } = calculateAriaValues({
+        layout: currentLayout,
+        panesArray: paneDatas,
+        pivotIndices: [index, index + 1]
+      });
+
+      const resizeHandleEl = resizeHandleElements[index];
+
+      if (isHTMLElement(resizeHandleEl)) {
+        const paneData = paneDatas[index];
+
+        resizeHandleEl.setAttribute('aria-controls', paneData.id);
+        resizeHandleEl.setAttribute('aria-valuemax', '' + Math.round(valueMax));
+        resizeHandleEl.setAttribute('aria-valuemin', '' + Math.round(valueMin));
+        resizeHandleEl.setAttribute(
+          'aria-valuenow',
+          valueNow != null ? '' + Math.round(valueNow) : ''
+        );
+      }
+    }
   });
 }
 
@@ -277,4 +321,14 @@ function validatePaneGroupLayout({
   }
 
   return nextLayout;
+}
+
+export function getResizeHandleElementsForGroup(
+  groupId: string
+): HTMLElement[] {
+  return Array.from(
+    document.querySelectorAll(
+      `[data-pane-resizer-id][data-pane-group-id="${groupId}"]`
+    )
+  );
 }

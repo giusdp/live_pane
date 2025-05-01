@@ -40,6 +40,7 @@ export type PaneGroupData = {
 
   unsubFromPaneDataChange: Unsubscriber;
   unsubFromLayoutChange: Unsubscriber;
+  unsubFromUpdateAriaValues: Unsubscriber;
 };
 
 export type Direction = 'horizontal' | 'vertical';
