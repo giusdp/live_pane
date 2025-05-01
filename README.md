@@ -110,5 +110,6 @@ Just make sure to set an `id` for the group and then use the same id in each pan
 - [x] Touch support
 - [x] Server-side events (collapse/expand)
 - [x] Documentation
-- [ ] Persistent layouts
-- [ ] Accessibility (aria data)
+- [x] Persistent layouts
+- [x] Accessibility (aria data)
+- [ ] Support pane collapse/expand transition animations
