@@ -15,8 +15,6 @@ defmodule DemoWeb.ConditionalLive do
       socket
       |> update(:hide_one, fn hide_one -> !hide_one end)
 
-    socket.assigns.hide_one |> dbg
-
     {:noreply, socket}
   end
 

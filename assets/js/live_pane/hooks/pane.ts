@@ -197,7 +197,10 @@ function collapsePane(paneData: PaneData, groupData: PaneGroupData) {
   if (paneSize === collapsedSize) return;
 
   // Store the size before collapse, which is returned when `expand()` is called
-  groupData.paneSizeBeforeCollapseMap.set(paneData.id, paneSize);
+  groupData.paneSizeBeforeCollapseMap.update(curr => {
+    curr.set(paneData.id, paneSize);
+    return curr;
+  });
 
   const isLastPane =
     findPaneDataIndex(paneDataArray, paneData.id) === paneDataArray.length - 1;
@@ -218,11 +221,6 @@ function collapsePane(paneData: PaneData, groupData: PaneGroupData) {
   }
 
   groupData.layout.set(nextLayout);
-  const onLayout = groupData.onLayoutChange;
-
-  if (onLayout) {
-    onLayout(nextLayout);
-  }
 }
 
 function expandPane(paneData: PaneData, groupData: PaneGroupData) {
@@ -243,7 +241,9 @@ function expandPane(paneData: PaneData, groupData: PaneGroupData) {
 
   if (paneSize !== collapsedSize) return;
   // Restore this pane to the size it was before it was collapsed, if possible.
-  const prevPaneSize = groupData.paneSizeBeforeCollapseMap.get(paneData.id);
+  const prevPaneSize = groupData.paneSizeBeforeCollapseMap
+    .get()
+    .get(paneData.id);
   const baseSize =
     prevPaneSize != null && prevPaneSize >= minSize ? prevPaneSize : minSize;
 
@@ -263,8 +263,6 @@ function expandPane(paneData: PaneData, groupData: PaneGroupData) {
   if (areArraysEqual(prevLayout, nextLayout)) return;
 
   groupData.layout.set(nextLayout);
-
-  groupData.onLayoutChange?.(nextLayout);
 }
 
 function paneDataHelper(

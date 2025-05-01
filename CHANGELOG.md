@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] (2025-05-01)
+
+- Add a new attr on groups `auto_save` to enable auto-saving on layout changes the sizes of the panes in local storage in order to restore them on page reload.
+- Add dynamic aria attributes to the resizers to improve accessibility.
+- Update doc site with new persistent layout example.
+
 ## [0.4.0] (2025-04-30)
 
 - Add `collpase` and `expand` server-side events.
