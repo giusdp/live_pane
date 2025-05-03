@@ -16,7 +16,7 @@ Hooks.Highlight = {
     let codeBlock = this.el.querySelector("pre code");
 
     if (codeBlock) {
-      hljs.highlightBlock(codeBlock);
+      hljs.highlightElement(codeBlock);
     }
   },
 };
