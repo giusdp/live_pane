@@ -64,7 +64,22 @@ export type PaneData = {
   id: string;
   order: number;
   constraints: PaneConstraints;
+  paneState: Writable<PaneState>;
 };
+
+export const enum PaneTransitionState {
+  None = '',
+  Collapsing = 'collapsing',
+  Expanding = 'expanding'
+}
+
+export const enum PaneState {
+  None = '',
+  Collapsing = 'collapsing',
+  Expanding = 'expanding',
+  Collapsed = 'collapsed',
+  Expanded = 'expanded'
+}
 
 export type ResizeEvent = KeyboardEvent | MouseEvent | TouchEvent;
 export type ResizeHandler = (event: ResizeEvent) => void;

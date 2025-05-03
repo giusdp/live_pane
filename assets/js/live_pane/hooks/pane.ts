@@ -1,15 +1,15 @@
 import { Hook } from 'phoenix_live_view';
 import {
-  CollapseEvent,
   PaneData,
   PaneGroupData,
   PaneId,
-  paneInstances
+  paneInstances,
+  PaneState
 } from '../core';
-import { Writable } from '../store';
+import { writable, Writable } from '../store';
 import { dragState, paneGroupInstances } from '../core';
 import { computePaneFlexBoxStyle } from '../style';
-import { assert } from '../utils';
+import { assert, findPaneDataIndex, paneDataHelper } from '../utils';
 import { adjustLayoutByDelta } from '../adjust-layout';
 import { areArraysEqual } from '../compare';
 
@@ -48,7 +48,8 @@ export function createPaneHook() {
           defaultSize,
           maxSize,
           minSize
-        }
+        },
+        paneState: writable(PaneState.None)
       };
 
       registerPane(
@@ -75,25 +76,42 @@ export function createPaneHook() {
           expandPane(paneData, groupData);
         }
       });
+
+      // TODO
+      const unsubFromPaneState = paneData.paneState.subscribe(state => {
+        const onCollapseEncodedJS = this.el.getAttribute('on_collapse');
+        if (onCollapseEncodedJS && state === PaneState.Collapsed) {
+          console.log('onCollapseEncodedJS', onCollapseEncodedJS);
+          this.liveSocket.execJS(this.el, onCollapseEncodedJS);
+        }
+
+        const onExpandEncodedJS = this.el.getAttribute('on_expand');
+        if (onExpandEncodedJS && state === PaneState.Expanded) {
+          console.log('onExpandEncodedJS', onExpandEncodedJS);
+          this.liveSocket.execJS(this.el, onExpandEncodedJS);
+        }
+      });
     },
 
     destroyed() {
       const { groupId, unsubs } = paneInstances.get(this.el.id)!;
-
       for (const unsub of unsubs) {
         unsub();
       }
-      const groupData = paneGroupInstances.get(groupId!);
-      unregisterPane(
-        this.el.id,
-        groupData!.paneDataArray,
-        groupData!.paneDataArrayChanged
-      );
+      const groupData = paneGroupInstances.get(groupId);
+      if (groupData) {
+        unregisterPane(
+          this.el.id,
+          groupData.paneDataArray,
+          groupData.paneDataArrayChanged
+        );
+      }
       paneInstances.delete(this.el.id);
     }
   };
   return paneHook;
 }
+
 
 function registerPane(
   paneData: PaneData,
@@ -135,12 +153,6 @@ function unregisterPane(
     paneDataArrayChanged.set(true);
     return curr;
   });
-}
-
-function findPaneDataIndex(paneDataArray: PaneData[], paneDataId: PaneId) {
-  return paneDataArray.findIndex(
-    prevPaneData => prevPaneData.id === paneDataId
-  );
 }
 
 function setupReactivePaneStyle(
@@ -263,30 +275,4 @@ function expandPane(paneData: PaneData, groupData: PaneGroupData) {
   if (areArraysEqual(prevLayout, nextLayout)) return;
 
   groupData.layout.set(nextLayout);
-}
-
-function paneDataHelper(
-  paneDataArray: PaneData[],
-  paneData: PaneData,
-  layout: number[]
-) {
-  const paneConstraintsArray = paneDataArray.map(
-    paneData => paneData.constraints
-  );
-
-  const paneIndex = findPaneDataIndex(paneDataArray, paneData.id);
-  const paneConstraints = paneConstraintsArray[paneIndex];
-
-  const isLastPane = paneIndex === paneDataArray.length - 1;
-  const pivotIndices = isLastPane
-    ? [paneIndex - 1, paneIndex]
-    : [paneIndex, paneIndex + 1];
-
-  const paneSize = layout[paneIndex];
-
-  return {
-    ...paneConstraints,
-    paneSize,
-    pivotIndices
-  };
 }

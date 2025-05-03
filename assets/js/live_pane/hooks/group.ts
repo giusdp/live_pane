@@ -6,10 +6,10 @@ import type {
   PaneGroupData,
   PaneConstraints
 } from '../core';
-import { defaultStorage, paneGroupInstances } from '../core';
+import { defaultStorage, paneGroupInstances, PaneState } from '../core';
 
 import { areArraysEqual, areNumbersAlmostEqual } from '../compare';
-import { assert, isHTMLElement } from '../utils';
+import { assert, isHTMLElement, paneDataHelper } from '../utils';
 import { resizePane } from '../resize';
 import {
   loadPaneGroupState,
@@ -71,6 +71,12 @@ export function createGroupHook() {
           layout,
           paneDataArray
         );
+
+      // TODO
+      const unsubFromUpdateIsCollapsed = updateIsCollapsedOnLayoutChange(
+        layout,
+        paneDataArray
+      );
 
       const groupData: PaneGroupData = {
         paneDataArray,
@@ -163,6 +169,28 @@ function updateLayoutOnPaneDataChange(
     if (areArraysEqual($prevLayout, nextLayout)) return;
 
     layout.set(nextLayout);
+  });
+}
+
+function updateIsCollapsedOnLayoutChange(
+  layout: Writable<number[]>,
+  paneDataArray: Writable<PaneData[]>
+) {
+  return layout.subscribe(changedLayout => {
+    const paneDatas = paneDataArray.get();
+    for (let index = 0; index < paneDatas.length - 1; index++) {
+      const paneData = paneDatas[index];
+      const isCollapsed = isPaneCollapsed(paneDatas, changedLayout, paneData);
+      if (isCollapsed) {
+        paneData.paneState.set(PaneState.Collapsed);
+        return;
+      }
+
+      const isExpanded = isPaneExpanded(paneDatas, changedLayout, paneData);
+      if (isExpanded) {
+        paneData.paneState.set(PaneState.Expanded);
+      }
+    }
   });
 }
 
@@ -331,4 +359,31 @@ export function getResizeHandleElementsForGroup(
       `[data-pane-resizer-id][data-pane-group-id="${groupId}"]`
     )
   );
+}
+
+function isPaneCollapsed(
+  paneDataArray: PaneData[],
+  layout: number[],
+  pane: PaneData
+) {
+  const {
+    collapsedSize = 0,
+    collapsible,
+    paneSize
+  } = paneDataHelper(paneDataArray, pane, layout);
+
+  return collapsible === true && paneSize === collapsedSize;
+}
+
+function isPaneExpanded(
+  paneDataArray: PaneData[],
+  layout: number[],
+  pane: PaneData
+) {
+  const {
+    collapsedSize = 0,
+    collapsible,
+    paneSize
+  } = paneDataHelper(paneDataArray, pane, layout);
+  return !collapsible || paneSize > collapsedSize;
 }
