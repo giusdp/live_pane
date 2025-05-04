@@ -51,6 +51,9 @@ var LiveMotion = (() => {
   function safe_not_equal(a, b) {
     return a != a ? b == b : a !== b || a && typeof a === "object" || typeof a === "function";
   }
+  function isHTMLElement(element2) {
+    return element2 instanceof HTMLElement;
+  }
   function isMouseEvent(event) {
     return event.type.startsWith("mouse");
   }
@@ -59,6 +62,48 @@ var LiveMotion = (() => {
   }
   function isKeyDown(event) {
     return event.type === "keydown";
+  }
+  function paneDataHelper(paneDataArray, paneData, layout) {
+    const paneConstraintsArray = paneDataArray.map(
+      (paneData2) => paneData2.constraints
+    );
+    const paneIndex = findPaneDataIndex(paneDataArray, paneData.id);
+    const paneConstraints = paneConstraintsArray[paneIndex];
+    const isLastPane = paneIndex === paneDataArray.length - 1;
+    const pivotIndices = isLastPane ? [paneIndex - 1, paneIndex] : [paneIndex, paneIndex + 1];
+    const paneSize = layout[paneIndex];
+    return __spreadProps(__spreadValues({}, paneConstraints), {
+      paneSize,
+      pivotIndices
+    });
+  }
+  function findPaneDataIndex(paneDataArray, paneDataId) {
+    return paneDataArray.findIndex((p) => p.id === paneDataId);
+  }
+  function isPaneCollapsed(paneDataArray, layout, pane) {
+    const {
+      collapsedSize = 0,
+      collapsible,
+      paneSize
+    } = paneDataHelper(paneDataArray, pane, layout);
+    return collapsible === true && paneSize === collapsedSize;
+  }
+  function isPaneExpanded(paneDataArray, layout, pane) {
+    const {
+      collapsedSize = 0,
+      collapsible,
+      paneSize
+    } = paneDataHelper(paneDataArray, pane, layout);
+    return !collapsible || paneSize > collapsedSize;
+  }
+  function tick() {
+    return new Promise((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          resolve();
+        });
+      });
+    });
   }
 
   // js/live_pane/store.ts
@@ -88,12 +133,119 @@ var LiveMotion = (() => {
     return { set, get, update, subscribe };
   }
 
+  // js/live_pane/storage.ts
+  function initializeStorage(storageObject) {
+    try {
+      if (typeof localStorage === "undefined") {
+        throw new Error("localStorage is not supported in this environment");
+      }
+      storageObject.getItem = (name) => localStorage.getItem(name);
+      storageObject.setItem = (name, value) => localStorage.setItem(name, value);
+    } catch (err) {
+      console.error(err);
+      storageObject.getItem = () => null;
+      storageObject.setItem = () => {
+      };
+    }
+  }
+  function savePaneGroupState(autoSaveId, panes, paneSizesBeforeCollapse, sizes, storage) {
+    const paneGroupKey = getPaneGroupKey(autoSaveId);
+    const paneKey = getPaneKey(panes);
+    const state = loadSerializedPaneGroupState(autoSaveId, storage) || {};
+    state[paneKey] = {
+      expandToSizes: Object.fromEntries(paneSizesBeforeCollapse.entries()),
+      layout: sizes
+    };
+    try {
+      storage.setItem(paneGroupKey, JSON.stringify(state));
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  function loadPaneGroupState(autoSaveId, panes, storage) {
+    const state = loadSerializedPaneGroupState(autoSaveId, storage) || {};
+    const paneKey = getPaneKey(panes);
+    return state[paneKey] || null;
+  }
+  function getPaneGroupKey(id) {
+    return `livepane:${id}`;
+  }
+  function getPaneKey(panes) {
+    const sortedPaneIds = panes.map(({ id }) => id).sort().join(",");
+    return sortedPaneIds;
+  }
+  function loadSerializedPaneGroupState(autoSaveId, storage) {
+    try {
+      const paneGroupKey = getPaneGroupKey(autoSaveId);
+      const serialized = storage.getItem(paneGroupKey);
+      const parsed = JSON.parse(serialized || "");
+      if (typeof parsed === "object" && parsed !== null) {
+        return parsed;
+      }
+    } catch (e) {
+    }
+    return null;
+  }
+  var debounceMap = {};
+  function debounce(callback, durationMs = 10) {
+    let timeoutId = null;
+    const callable = (...args) => {
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = setTimeout(() => {
+        callback(...args);
+      }, durationMs);
+    };
+    return callable;
+  }
+  function updateStorageValues({
+    saveId,
+    layout,
+    storage,
+    paneDataArrayStore,
+    paneSizeBeforeCollapseStore
+  }) {
+    const $paneDataArray = paneDataArrayStore.get();
+    if (layout.length === 0 || layout.length !== $paneDataArray.length)
+      return;
+    let debouncedSave = debounceMap[saveId];
+    if (debouncedSave == null) {
+      debouncedSave = debounce(
+        savePaneGroupState,
+        LOCAL_STORAGE_DEBOUNCE_INTERVAL
+      );
+      debounceMap[saveId] = debouncedSave;
+    }
+    const clonedPaneDataArray = [...$paneDataArray];
+    const $paneSizeBeforeCollapse = paneSizeBeforeCollapseStore.get();
+    const clonedPaneSizesBeforeCollapse = new Map($paneSizeBeforeCollapse);
+    debouncedSave(
+      saveId,
+      clonedPaneDataArray,
+      clonedPaneSizesBeforeCollapse,
+      layout,
+      storage
+    );
+  }
+
   // js/live_pane/core.ts
+  var LOCAL_STORAGE_DEBOUNCE_INTERVAL = 100;
   var PRECISION = 10;
   var paneGroupInstances = /* @__PURE__ */ new Map();
   var paneInstances = /* @__PURE__ */ new Map();
   var resizerInstances = /* @__PURE__ */ new Map();
   var dragState = writable(null);
+  var defaultStorage = {
+    getItem: (name) => {
+      initializeStorage(defaultStorage);
+      return defaultStorage.getItem(name);
+    },
+    setItem: (name, value) => {
+      initializeStorage(defaultStorage);
+      defaultStorage.setItem(name, value);
+    }
+  };
 
   // js/live_pane/compare.ts
   function areNumbersAlmostEqual(actual, expected, fractionDigits = PRECISION) {
@@ -147,6 +299,38 @@ var LiveMotion = (() => {
     return compareNumbersWithTolerance(size, halfwayPoint) < 0 ? collapsedSize : minSize;
   }
 
+  // js/live_pane/aria.ts
+  function calculateAriaValues({
+    layout,
+    panesArray,
+    pivotIndices
+  }) {
+    let currentMinSize = 0;
+    let currentMaxSize = 100;
+    let totalMinSize = 0;
+    let totalMaxSize = 0;
+    const firstIndex = pivotIndices[0];
+    for (let i = 0; i < panesArray.length; i++) {
+      const { constraints } = panesArray[i];
+      const { maxSize = 100, minSize = 0 } = constraints;
+      if (i === firstIndex) {
+        currentMinSize = minSize;
+        currentMaxSize = maxSize;
+      } else {
+        totalMinSize += minSize;
+        totalMaxSize += maxSize;
+      }
+    }
+    const valueMax = Math.min(currentMaxSize, 100 - totalMinSize);
+    const valueMin = Math.max(currentMinSize, 100 - totalMaxSize);
+    const valueNow = layout[firstIndex];
+    return {
+      valueMax,
+      valueMin,
+      valueNow
+    };
+  }
+
   // js/live_pane/hooks/group.ts
   function createGroupHook() {
     let groupHook = {
@@ -160,42 +344,82 @@ var LiveMotion = (() => {
         const dir = this.el.getAttribute("data-pane-direction") || "horizontal";
         const keyboardResizeByAttr = this.el.getAttribute("keyboard-resize-by");
         const keyboardResizeBy = keyboardResizeByAttr ? Number(keyboardResizeByAttr) : null;
+        const autoSave = this.el.getAttribute("auto-save") === "true";
         const paneDataArray = writable([]);
         const paneDataArrayChanged = writable(false);
         const direction = writable(dir);
         const layout = writable([]);
         const prevDelta = writable(0);
-        const dragHandleId = "";
         const paneIdToLastNotifiedSizeMap = {};
-        const paneSizeBeforeCollapseMap = /* @__PURE__ */ new Map();
+        const paneSizeBeforeCollapseMap = writable(
+          /* @__PURE__ */ new Map()
+        );
         const unsubFromPaneDataChange = updateLayoutOnPaneDataChange(
+          this.el.id,
           layout,
           paneDataArray,
-          paneDataArrayChanged
+          paneDataArrayChanged,
+          autoSave,
+          paneSizeBeforeCollapseMap
+        );
+        const unsubFromLayoutChange = saveStateOnLayoutChange(
+          this.el.id,
+          layout,
+          paneDataArray,
+          paneSizeBeforeCollapseMap,
+          autoSave
+        );
+        const unsubFromUpdateAriaValues = updateResizeHandleAriaValuesOnLayoutChange(
+          this.el.id,
+          layout,
+          paneDataArray
+        );
+        const unsubFromUpdateIsCollapsed = updateIsCollapsedOnLayoutChange(
+          layout,
+          paneDataArray
         );
         const groupData = {
           paneDataArray,
           paneDataArrayChanged,
           direction,
-          dragHandleId,
           layout,
           prevDelta,
           keyboardResizeBy,
           paneIdToLastNotifiedSizeMap,
           paneSizeBeforeCollapseMap,
-          unsubFromPaneDataChange
+          autoSave,
+          unsubFromPaneDataChange,
+          unsubFromLayoutChange,
+          unsubFromUpdateAriaValues,
+          unsubFromUpdateIsCollapsed
         };
         paneGroupInstances.set(this.el.id, groupData);
       },
       destroyed() {
-        var _a;
-        (_a = paneGroupInstances.get(this.el.id)) == null ? void 0 : _a.unsubFromPaneDataChange();
+        var _a, _b, _c, _d;
+        (_a = paneGroupInstances.get(this.el.id)) == null ? void 0 : _a.unsubFromUpdateIsCollapsed();
+        (_b = paneGroupInstances.get(this.el.id)) == null ? void 0 : _b.unsubFromPaneDataChange();
+        (_c = paneGroupInstances.get(this.el.id)) == null ? void 0 : _c.unsubFromLayoutChange();
+        (_d = paneGroupInstances.get(this.el.id)) == null ? void 0 : _d.unsubFromUpdateAriaValues();
         paneGroupInstances.delete(this.el.id);
       }
     };
     return groupHook;
   }
-  function updateLayoutOnPaneDataChange(layout, paneDataArray, paneDataArrayChanged) {
+  function saveStateOnLayoutChange(groupId, layout, paneDataArray, paneSizeBeforeCollapseMap, autoSave = false, storage = defaultStorage) {
+    return layout.subscribe((layout2) => {
+      if (!autoSave)
+        return;
+      updateStorageValues({
+        saveId: groupId,
+        layout: layout2,
+        storage,
+        paneDataArrayStore: paneDataArray,
+        paneSizeBeforeCollapseStore: paneSizeBeforeCollapseMap
+      });
+    });
+  }
+  function updateLayoutOnPaneDataChange(groupId, layout, paneDataArray, paneDataArrayChanged, autoSave = false, paneSizeBeforeCollapseMap) {
     return paneDataArrayChanged.subscribe((changed) => {
       if (!changed)
         return;
@@ -203,6 +427,15 @@ var LiveMotion = (() => {
       const $prevLayout = layout.get();
       const $paneDataArray = paneDataArray.get();
       let unsafeLayout = null;
+      if (autoSave) {
+        const state = loadPaneGroupState(groupId, $paneDataArray, defaultStorage);
+        if (state) {
+          paneSizeBeforeCollapseMap.set(
+            new Map(Object.entries(state.expandToSizes))
+          );
+          unsafeLayout = state.layout;
+        }
+      }
       if (unsafeLayout == null) {
         unsafeLayout = getUnsafeDefaultLayout({
           paneDataArray: $paneDataArray
@@ -215,6 +448,47 @@ var LiveMotion = (() => {
       if (areArraysEqual($prevLayout, nextLayout))
         return;
       layout.set(nextLayout);
+    });
+  }
+  function updateIsCollapsedOnLayoutChange(layout, paneDataArray) {
+    return layout.subscribe((changedLayout) => {
+      const paneDatas = paneDataArray.get();
+      for (let index = 0; index <= paneDatas.length - 1; index++) {
+        const paneData = paneDatas[index];
+        const isCollapsed = isPaneCollapsed(paneDatas, changedLayout, paneData);
+        if (isCollapsed && paneData.state.get() !== "collapsing" /* Collapsing */) {
+          paneData.state.set("collapsed" /* Collapsed */);
+          continue;
+        }
+        const isExpanded = isPaneExpanded(paneDatas, changedLayout, paneData);
+        if (isExpanded && paneData.state.get() !== "expanding" /* Expanding */) {
+          paneData.state.set("expanded" /* Expanded */);
+        }
+      }
+    });
+  }
+  function updateResizeHandleAriaValuesOnLayoutChange(groupId, layout, paneDataArray) {
+    return layout.subscribe((currentLayout) => {
+      const resizeHandleElements = getResizeHandleElementsForGroup(groupId);
+      const paneDatas = paneDataArray.get();
+      for (let index = 0; index < paneDatas.length - 1; index++) {
+        const { valueMax, valueMin, valueNow } = calculateAriaValues({
+          layout: currentLayout,
+          panesArray: paneDatas,
+          pivotIndices: [index, index + 1]
+        });
+        const resizeHandleEl = resizeHandleElements[index];
+        if (isHTMLElement(resizeHandleEl)) {
+          const paneData = paneDatas[index];
+          resizeHandleEl.setAttribute("aria-controls", paneData.id);
+          resizeHandleEl.setAttribute("aria-valuemax", "" + Math.round(valueMax));
+          resizeHandleEl.setAttribute("aria-valuemin", "" + Math.round(valueMin));
+          resizeHandleEl.setAttribute(
+            "aria-valuenow",
+            valueNow != null ? "" + Math.round(valueNow) : ""
+          );
+        }
+      }
     });
   }
   function getUnsafeDefaultLayout({
@@ -306,6 +580,13 @@ var LiveMotion = (() => {
       }
     }
     return nextLayout;
+  }
+  function getResizeHandleElementsForGroup(groupId) {
+    return Array.from(
+      document.querySelectorAll(
+        `[data-pane-resizer-id][data-pane-group-id="${groupId}"]`
+      )
+    );
   }
 
   // js/live_pane/style.ts
@@ -554,6 +835,10 @@ var LiveMotion = (() => {
         const defaultSize = Number(this.el.getAttribute("default-size")) || void 0;
         const maxSize = Number(this.el.getAttribute("max-size")) || 100;
         const minSize = Number(this.el.getAttribute("min-size")) || 0;
+        let startingState = "expanded" /* Expanded */;
+        if (defaultSize && collapsible && defaultSize <= collapsedSize) {
+          startingState = "collapsed" /* Collapsed */;
+        }
         const paneData = {
           id: this.el.id,
           order,
@@ -563,7 +848,8 @@ var LiveMotion = (() => {
             defaultSize,
             maxSize,
             minSize
-          }
+          },
+          state: writable(startingState)
         };
         registerPane(
           paneData,
@@ -576,14 +862,44 @@ var LiveMotion = (() => {
           paneData,
           defaultSize
         );
+        const unsubFromPaneState = paneData.state.subscribe((state) => {
+          const onCollapseEncodedJS = this.el.getAttribute("on-collapse");
+          if (onCollapseEncodedJS && state === "collapsed" /* Collapsed */) {
+            this.liveSocket.execJS(this.el, onCollapseEncodedJS);
+            this.el.setAttribute("data-pane-state", "collapsed");
+            return;
+          }
+          const onExpandEncodedJS = this.el.getAttribute("on-expand");
+          if (onExpandEncodedJS && state === "expanded" /* Expanded */) {
+            this.liveSocket.execJS(this.el, onExpandEncodedJS);
+            this.el.setAttribute("data-pane-state", "expanded");
+            return;
+          }
+          this.el.setAttribute("data-pane-state", state);
+        });
+        unsubs.push(unsubFromPaneState);
         paneInstances.set(paneId, { groupId, unsubs });
         this.handleEvent("collapse", ({ pane_id }) => {
           if (paneId === pane_id) {
+            handleTransition(
+              this.el,
+              groupData.paneDataArray,
+              groupData.layout,
+              paneData,
+              "collapsing" /* Collapsing */
+            );
             collapsePane(paneData, groupData);
           }
         });
         this.handleEvent("expand", ({ pane_id }) => {
           if (paneId === pane_id) {
+            handleTransition(
+              this.el,
+              groupData.paneDataArray,
+              groupData.layout,
+              paneData,
+              "expanding" /* Expanding */
+            );
             expandPane(paneData, groupData);
           }
         });
@@ -594,11 +910,13 @@ var LiveMotion = (() => {
           unsub();
         }
         const groupData = paneGroupInstances.get(groupId);
-        unregisterPane(
-          this.el.id,
-          groupData.paneDataArray,
-          groupData.paneDataArrayChanged
-        );
+        if (groupData) {
+          unregisterPane(
+            this.el.id,
+            groupData.paneDataArray,
+            groupData.paneDataArrayChanged
+          );
+        }
         paneInstances.delete(this.el.id);
       }
     };
@@ -634,11 +952,6 @@ var LiveMotion = (() => {
       paneDataArrayChanged.set(true);
       return curr;
     });
-  }
-  function findPaneDataIndex(paneDataArray, paneDataId) {
-    return paneDataArray.findIndex(
-      (prevPaneData) => prevPaneData.id === paneDataId
-    );
   }
   function setupReactivePaneStyle(el, groupData, paneData, defaultSize) {
     const getPaneStyle = () => {
@@ -681,7 +994,10 @@ var LiveMotion = (() => {
     assert(paneSize != null);
     if (paneSize === collapsedSize)
       return;
-    groupData.paneSizeBeforeCollapseMap.set(paneData.id, paneSize);
+    groupData.paneSizeBeforeCollapseMap.update((curr) => {
+      curr.set(paneData.id, paneSize);
+      return curr;
+    });
     const isLastPane = findPaneDataIndex(paneDataArray, paneData.id) === paneDataArray.length - 1;
     const delta = isLastPane ? paneSize - collapsedSize : collapsedSize - paneSize;
     const nextLayout = adjustLayoutByDelta({
@@ -695,13 +1011,8 @@ var LiveMotion = (() => {
       return;
     }
     groupData.layout.set(nextLayout);
-    const onLayout = groupData.onLayoutChange;
-    if (onLayout) {
-      onLayout(nextLayout);
-    }
   }
   function expandPane(paneData, groupData) {
-    var _a;
     const prevLayout = groupData.layout.get();
     const paneDataArray = groupData.paneDataArray.get();
     if (!paneData.constraints.collapsible)
@@ -717,7 +1028,7 @@ var LiveMotion = (() => {
     } = paneDataHelper(paneDataArray, paneData, prevLayout);
     if (paneSize !== collapsedSize)
       return;
-    const prevPaneSize = groupData.paneSizeBeforeCollapseMap.get(paneData.id);
+    const prevPaneSize = groupData.paneSizeBeforeCollapseMap.get().get(paneData.id);
     const baseSize = prevPaneSize != null && prevPaneSize >= minSize ? prevPaneSize : minSize;
     const isLastPane = findPaneDataIndex(paneDataArray, paneData.id) === paneDataArray.length - 1;
     const delta = isLastPane ? paneSize - baseSize : baseSize - paneSize;
@@ -731,20 +1042,26 @@ var LiveMotion = (() => {
     if (areArraysEqual(prevLayout, nextLayout))
       return;
     groupData.layout.set(nextLayout);
-    (_a = groupData.onLayoutChange) == null ? void 0 : _a.call(groupData, nextLayout);
   }
-  function paneDataHelper(paneDataArray, paneData, layout) {
-    const paneConstraintsArray = paneDataArray.map(
-      (paneData2) => paneData2.constraints
-    );
-    const paneIndex = findPaneDataIndex(paneDataArray, paneData.id);
-    const paneConstraints = paneConstraintsArray[paneIndex];
-    const isLastPane = paneIndex === paneDataArray.length - 1;
-    const pivotIndices = isLastPane ? [paneIndex - 1, paneIndex] : [paneIndex, paneIndex + 1];
-    const paneSize = layout[paneIndex];
-    return __spreadProps(__spreadValues({}, paneConstraints), {
-      paneSize,
-      pivotIndices
+  function handleTransition(element2, paneDataArray, layout, pane, transState) {
+    pane.state.set(transState);
+    tick().then(() => {
+      const computedStyle = getComputedStyle(element2);
+      const hasTransition = computedStyle.transitionDuration !== "0s";
+      if (!hasTransition) {
+        const newState = isPaneCollapsed(paneDataArray.get(), layout.get(), pane) ? "collapsed" /* Collapsed */ : "expanded" /* Expanded */;
+        pane.state.set(newState);
+        return;
+      }
+      const handleTransitionEnd = (event) => {
+        if (event.propertyName === "flex-grow") {
+          pane.state.set(
+            isPaneCollapsed(paneDataArray.get(), layout.get(), pane) ? "collapsed" /* Collapsed */ : "expanded" /* Expanded */
+          );
+          element2.removeEventListener("transitionend", handleTransitionEnd);
+        }
+      };
+      element2.addEventListener("transitionend", handleTransitionEnd);
     });
   }
 
@@ -1057,7 +1374,7 @@ var LiveMotion = (() => {
       );
     }
   }
-  function getResizeHandleElementsForGroup(groupId) {
+  function getResizeHandleElementsForGroup2(groupId) {
     return Array.from(
       document.querySelectorAll(
         `[data-pane-resizer-id][data-pane-group-id="${groupId}"]`
@@ -1065,7 +1382,7 @@ var LiveMotion = (() => {
     );
   }
   function getResizeHandleElementIndex(groupId, id) {
-    const handles = getResizeHandleElementsForGroup(groupId);
+    const handles = getResizeHandleElementsForGroup2(groupId);
     const index = handles.findIndex(
       (handle) => handle.getAttribute("data-pane-resizer-id") === id
     );
@@ -1108,7 +1425,7 @@ var LiveMotion = (() => {
     if (event.key !== "F6")
       return;
     event.preventDefault();
-    const handles = getResizeHandleElementsForGroup(groupId);
+    const handles = getResizeHandleElementsForGroup2(groupId);
     const index = getResizeHandleElementIndex(groupId, resizeHandleId);
     if (index === null)
       return;

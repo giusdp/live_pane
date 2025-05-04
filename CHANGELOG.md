@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] (2025-05-04)
+
+- Add `data-pane-state` HTML attribute to track collapsed, collapsing, expanded, expanding states.
+- Add `on_collapse` and `on_expand` attr in LivePane.pane component to pass JS commands.
+- Add new example to showcase styling based on the pane state with transition animation.
+
 ## [0.5.0] (2025-05-01)
 
 - Add a new attr on groups `auto_save` to enable auto-saving on layout changes the sizes of the panes in local storage in order to restore them on page reload.
