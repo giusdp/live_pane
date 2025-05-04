@@ -20,8 +20,6 @@ defmodule DemoWeb.StatesLive do
   end
 
   def handle_event("collapsed", %{"pane" => pane}, socket) do
-    pane |> IO.inspect(label: "collapsed")
-
     socket =
       case pane do
         "demo_pane_1" -> assign(socket, :collapsed, true)
@@ -32,8 +30,6 @@ defmodule DemoWeb.StatesLive do
   end
 
   def handle_event("expanded", %{"pane" => pane}, socket) do
-    pane |> IO.inspect(label: "expanded pane")
-
     socket =
       case pane do
         "demo_pane_1" -> assign(socket, :collapsed, false)
