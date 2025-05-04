@@ -101,6 +101,14 @@ defmodule LivePane do
     doc:
       "The order of the pane in the group. Useful for maintaining order when conditionally rendering panes."
 
+  attr :on_collapse, :any,
+    default: nil,
+    doc: "JS commands that will be executed when the pane reaches its collapsed size."
+
+  attr :on_expand, :any,
+    default: nil,
+    doc: "JS commands that will be executed when the pane is expanded."
+
   attr :rest, :global
   slot :inner_block, required: true
 
@@ -123,6 +131,8 @@ defmodule LivePane do
       min-size={@min_size}
       data-pane-order={@order}
       class={@class}
+      on-collapse={@on_collapse}
+      on-expand={@on_expand}
       {@rest}
     >
       {render_slot(@inner_block)}

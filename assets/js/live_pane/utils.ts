@@ -74,3 +74,41 @@ export function findPaneDataIndex(
 ) {
   return paneDataArray.findIndex(p => p.id === paneDataId);
 }
+
+export function isPaneCollapsed(
+  paneDataArray: PaneData[],
+  layout: number[],
+  pane: PaneData
+) {
+  const {
+    collapsedSize = 0,
+    collapsible,
+    paneSize
+  } = paneDataHelper(paneDataArray, pane, layout);
+
+  return collapsible === true && paneSize === collapsedSize;
+}
+
+export function isPaneExpanded(
+  paneDataArray: PaneData[],
+  layout: number[],
+  pane: PaneData
+) {
+  const {
+    collapsedSize = 0,
+    collapsible,
+    paneSize
+  } = paneDataHelper(paneDataArray, pane, layout);
+  return !collapsible || paneSize > collapsedSize;
+}
+
+export function tick(): Promise<void> {
+  return new Promise(resolve => {
+    requestAnimationFrame(() => {
+      // Wait one more frame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        resolve();
+      });
+    });
+  });
+}

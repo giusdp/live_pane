@@ -9,7 +9,13 @@ import type {
 import { defaultStorage, paneGroupInstances, PaneState } from '../core';
 
 import { areArraysEqual, areNumbersAlmostEqual } from '../compare';
-import { assert, isHTMLElement, paneDataHelper } from '../utils';
+import {
+  assert,
+  isHTMLElement,
+  isPaneCollapsed,
+  isPaneExpanded,
+  paneDataHelper
+} from '../utils';
 import { resizePane } from '../resize';
 import {
   loadPaneGroupState,
@@ -72,7 +78,6 @@ export function createGroupHook() {
           paneDataArray
         );
 
-      // TODO
       const unsubFromUpdateIsCollapsed = updateIsCollapsedOnLayoutChange(
         layout,
         paneDataArray
@@ -90,13 +95,15 @@ export function createGroupHook() {
         autoSave,
         unsubFromPaneDataChange,
         unsubFromLayoutChange,
-        unsubFromUpdateAriaValues
+        unsubFromUpdateAriaValues,
+        unsubFromUpdateIsCollapsed
       };
 
       paneGroupInstances.set(this.el.id, groupData);
     },
 
     destroyed() {
+      paneGroupInstances.get(this.el.id)?.unsubFromUpdateIsCollapsed();
       paneGroupInstances.get(this.el.id)?.unsubFromPaneDataChange();
       paneGroupInstances.get(this.el.id)?.unsubFromLayoutChange();
       paneGroupInstances.get(this.el.id)?.unsubFromUpdateAriaValues();
@@ -178,17 +185,18 @@ function updateIsCollapsedOnLayoutChange(
 ) {
   return layout.subscribe(changedLayout => {
     const paneDatas = paneDataArray.get();
-    for (let index = 0; index < paneDatas.length - 1; index++) {
+
+    for (let index = 0; index <= paneDatas.length - 1; index++) {
       const paneData = paneDatas[index];
       const isCollapsed = isPaneCollapsed(paneDatas, changedLayout, paneData);
-      if (isCollapsed) {
-        paneData.paneState.set(PaneState.Collapsed);
-        return;
+      if (isCollapsed && paneData.state.get() !== PaneState.Collapsing) {
+        paneData.state.set(PaneState.Collapsed);
+        continue;
       }
 
       const isExpanded = isPaneExpanded(paneDatas, changedLayout, paneData);
-      if (isExpanded) {
-        paneData.paneState.set(PaneState.Expanded);
+      if (isExpanded && paneData.state.get() !== PaneState.Expanding) {
+        paneData.state.set(PaneState.Expanded);
       }
     }
   });
@@ -359,31 +367,4 @@ export function getResizeHandleElementsForGroup(
       `[data-pane-resizer-id][data-pane-group-id="${groupId}"]`
     )
   );
-}
-
-function isPaneCollapsed(
-  paneDataArray: PaneData[],
-  layout: number[],
-  pane: PaneData
-) {
-  const {
-    collapsedSize = 0,
-    collapsible,
-    paneSize
-  } = paneDataHelper(paneDataArray, pane, layout);
-
-  return collapsible === true && paneSize === collapsedSize;
-}
-
-function isPaneExpanded(
-  paneDataArray: PaneData[],
-  layout: number[],
-  pane: PaneData
-) {
-  const {
-    collapsedSize = 0,
-    collapsible,
-    paneSize
-  } = paneDataHelper(paneDataArray, pane, layout);
-  return !collapsible || paneSize > collapsedSize;
 }

@@ -41,6 +41,7 @@ export type PaneGroupData = {
   unsubFromPaneDataChange: Unsubscriber;
   unsubFromLayoutChange: Unsubscriber;
   unsubFromUpdateAriaValues: Unsubscriber;
+  unsubFromUpdateIsCollapsed: Unsubscriber;
 };
 
 export type Direction = 'horizontal' | 'vertical';
@@ -64,17 +65,10 @@ export type PaneData = {
   id: string;
   order: number;
   constraints: PaneConstraints;
-  paneState: Writable<PaneState>;
+  state: Writable<PaneState>;
 };
 
-export const enum PaneTransitionState {
-  None = '',
-  Collapsing = 'collapsing',
-  Expanding = 'expanding'
-}
-
 export const enum PaneState {
-  None = '',
   Collapsing = 'collapsing',
   Expanding = 'expanding',
   Collapsed = 'collapsed',

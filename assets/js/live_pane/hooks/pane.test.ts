@@ -4,6 +4,9 @@ import { renderHook } from '../../../test';
 import { createGroupHook } from './group';
 import { paneGroupInstances, paneInstances } from '../core';
 
+// @ts-ignore
+global.requestAnimationFrame = cb => cb();
+
 test('Mounting pane registers it to group data', t => {
   const groupHook = renderHook('<div id="a">group</div>', createGroupHook());
   groupHook.trigger('mounted');
@@ -26,16 +29,15 @@ test('Mounting pane registers it to group data', t => {
   paneHook.trigger('mounted');
 
   const paneData = panes.get()[0];
-  t.deepEqual(paneData, {
-    id: 'pane1',
-    order: 0,
-    constraints: {
-      minSize: 0,
-      maxSize: 100,
-      defaultSize: undefined,
-      collapsedSize: 0,
-      collapsible: false
-    }
+  t.deepEqual(paneData.id, 'pane1');
+  t.deepEqual(paneData.order, 0);
+  t.deepEqual(paneData.state.get(), 'expanded');
+  t.deepEqual(paneData.constraints, {
+    minSize: 0,
+    maxSize: 100,
+    defaultSize: undefined,
+    collapsedSize: 0,
+    collapsible: false
   });
 });
 
