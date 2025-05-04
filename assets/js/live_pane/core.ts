@@ -41,6 +41,7 @@ export type PaneGroupData = {
   unsubFromPaneDataChange: Unsubscriber;
   unsubFromLayoutChange: Unsubscriber;
   unsubFromUpdateAriaValues: Unsubscriber;
+  unsubFromUpdateIsCollapsed: Unsubscriber;
 };
 
 export type Direction = 'horizontal' | 'vertical';
@@ -64,7 +65,15 @@ export type PaneData = {
   id: string;
   order: number;
   constraints: PaneConstraints;
+  state: Writable<PaneState>;
 };
+
+export const enum PaneState {
+  Collapsing = 'collapsing',
+  Expanding = 'expanding',
+  Collapsed = 'collapsed',
+  Expanded = 'expanded'
+}
 
 export type ResizeEvent = KeyboardEvent | MouseEvent | TouchEvent;
 export type ResizeHandler = (event: ResizeEvent) => void;

@@ -1,4 +1,4 @@
-import type { ResizeEvent } from './core';
+import type { PaneData, PaneId, ResizeEvent } from './core';
 
 export function noop() {}
 
@@ -40,4 +40,75 @@ export function isTouchEvent(event: ResizeEvent): event is TouchEvent {
 
 export function isKeyDown(event: ResizeEvent): event is KeyboardEvent {
   return event.type === 'keydown';
+}
+
+export function paneDataHelper(
+  paneDataArray: PaneData[],
+  paneData: PaneData,
+  layout: number[]
+) {
+  const paneConstraintsArray = paneDataArray.map(
+    paneData => paneData.constraints
+  );
+
+  const paneIndex = findPaneDataIndex(paneDataArray, paneData.id);
+  const paneConstraints = paneConstraintsArray[paneIndex];
+
+  const isLastPane = paneIndex === paneDataArray.length - 1;
+  const pivotIndices = isLastPane
+    ? [paneIndex - 1, paneIndex]
+    : [paneIndex, paneIndex + 1];
+
+  const paneSize = layout[paneIndex];
+
+  return {
+    ...paneConstraints,
+    paneSize,
+    pivotIndices
+  };
+}
+
+export function findPaneDataIndex(
+  paneDataArray: PaneData[],
+  paneDataId: PaneId
+) {
+  return paneDataArray.findIndex(p => p.id === paneDataId);
+}
+
+export function isPaneCollapsed(
+  paneDataArray: PaneData[],
+  layout: number[],
+  pane: PaneData
+) {
+  const {
+    collapsedSize = 0,
+    collapsible,
+    paneSize
+  } = paneDataHelper(paneDataArray, pane, layout);
+
+  return collapsible === true && paneSize === collapsedSize;
+}
+
+export function isPaneExpanded(
+  paneDataArray: PaneData[],
+  layout: number[],
+  pane: PaneData
+) {
+  const {
+    collapsedSize = 0,
+    collapsible,
+    paneSize
+  } = paneDataHelper(paneDataArray, pane, layout);
+  return !collapsible || paneSize > collapsedSize;
+}
+
+export function tick(): Promise<void> {
+  return new Promise(resolve => {
+    requestAnimationFrame(() => {
+      // Wait one more frame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        resolve();
+      });
+    });
+  });
 }

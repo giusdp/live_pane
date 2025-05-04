@@ -1,15 +1,21 @@
 import { Hook } from 'phoenix_live_view';
 import {
-  CollapseEvent,
   PaneData,
   PaneGroupData,
   PaneId,
-  paneInstances
+  paneInstances,
+  PaneState
 } from '../core';
-import { Writable } from '../store';
+import { writable, Writable } from '../store';
 import { dragState, paneGroupInstances } from '../core';
 import { computePaneFlexBoxStyle } from '../style';
-import { assert } from '../utils';
+import {
+  assert,
+  findPaneDataIndex,
+  isPaneCollapsed,
+  paneDataHelper,
+  tick
+} from '../utils';
 import { adjustLayoutByDelta } from '../adjust-layout';
 import { areArraysEqual } from '../compare';
 
@@ -39,6 +45,10 @@ export function createPaneHook() {
       const maxSize = Number(this.el.getAttribute('max-size')) || 100;
       const minSize = Number(this.el.getAttribute('min-size')) || 0;
 
+      let startingState = PaneState.Expanded;
+      if (defaultSize && collapsible && defaultSize <= collapsedSize) {
+        startingState = PaneState.Collapsed;
+      }
       const paneData: PaneData = {
         id: this.el.id,
         order,
@@ -48,7 +58,8 @@ export function createPaneHook() {
           defaultSize,
           maxSize,
           minSize
-        }
+        },
+        state: writable(startingState)
       };
 
       registerPane(
@@ -63,15 +74,50 @@ export function createPaneHook() {
         paneData,
         defaultSize
       );
+
+      const unsubFromPaneState = paneData.state.subscribe(state => {
+        const onCollapseEncodedJS = this.el.getAttribute('on-collapse');
+        if (onCollapseEncodedJS && state === PaneState.Collapsed) {
+          this.liveSocket.execJS(this.el, onCollapseEncodedJS);
+          this.el.setAttribute('data-pane-state', 'collapsed');
+          return;
+        }
+
+        const onExpandEncodedJS = this.el.getAttribute('on-expand');
+        if (onExpandEncodedJS && state === PaneState.Expanded) {
+          this.liveSocket.execJS(this.el, onExpandEncodedJS);
+          this.el.setAttribute('data-pane-state', 'expanded');
+          return;
+        }
+
+        this.el.setAttribute('data-pane-state', state);
+      });
+
+      unsubs.push(unsubFromPaneState);
+
       paneInstances.set(paneId, { groupId, unsubs });
 
       this.handleEvent('collapse', ({ pane_id }: { pane_id: string }) => {
         if (paneId === pane_id) {
+          handleTransition(
+            this.el,
+            groupData.paneDataArray,
+            groupData.layout,
+            paneData,
+            PaneState.Collapsing
+          );
           collapsePane(paneData, groupData);
         }
       });
       this.handleEvent('expand', ({ pane_id }: { pane_id: string }) => {
         if (paneId === pane_id) {
+          handleTransition(
+            this.el,
+            groupData.paneDataArray,
+            groupData.layout,
+            paneData,
+            PaneState.Expanding
+          );
           expandPane(paneData, groupData);
         }
       });
@@ -79,16 +125,17 @@ export function createPaneHook() {
 
     destroyed() {
       const { groupId, unsubs } = paneInstances.get(this.el.id)!;
-
       for (const unsub of unsubs) {
         unsub();
       }
-      const groupData = paneGroupInstances.get(groupId!);
-      unregisterPane(
-        this.el.id,
-        groupData!.paneDataArray,
-        groupData!.paneDataArrayChanged
-      );
+      const groupData = paneGroupInstances.get(groupId);
+      if (groupData) {
+        unregisterPane(
+          this.el.id,
+          groupData.paneDataArray,
+          groupData.paneDataArrayChanged
+        );
+      }
       paneInstances.delete(this.el.id);
     }
   };
@@ -135,12 +182,6 @@ function unregisterPane(
     paneDataArrayChanged.set(true);
     return curr;
   });
-}
-
-function findPaneDataIndex(paneDataArray: PaneData[], paneDataId: PaneId) {
-  return paneDataArray.findIndex(
-    prevPaneData => prevPaneData.id === paneDataId
-  );
 }
 
 function setupReactivePaneStyle(
@@ -265,28 +306,39 @@ function expandPane(paneData: PaneData, groupData: PaneGroupData) {
   groupData.layout.set(nextLayout);
 }
 
-function paneDataHelper(
-  paneDataArray: PaneData[],
-  paneData: PaneData,
-  layout: number[]
+function handleTransition(
+  element: HTMLElement,
+  paneDataArray: Writable<PaneData[]>,
+  layout: Writable<number[]>,
+  pane: PaneData,
+  transState: PaneState
 ) {
-  const paneConstraintsArray = paneDataArray.map(
-    paneData => paneData.constraints
-  );
+  pane.state.set(transState);
+  tick().then(() => {
+    const computedStyle = getComputedStyle(element);
 
-  const paneIndex = findPaneDataIndex(paneDataArray, paneData.id);
-  const paneConstraints = paneConstraintsArray[paneIndex];
+    const hasTransition = computedStyle.transitionDuration !== '0s';
 
-  const isLastPane = paneIndex === paneDataArray.length - 1;
-  const pivotIndices = isLastPane
-    ? [paneIndex - 1, paneIndex]
-    : [paneIndex, paneIndex + 1];
+    if (!hasTransition) {
+      const newState = isPaneCollapsed(paneDataArray.get(), layout.get(), pane)
+        ? PaneState.Collapsed
+        : PaneState.Expanded;
+      pane.state.set(newState);
+      return;
+    }
+    const handleTransitionEnd = (event: TransitionEvent) => {
+      // Only handle width/flex transitions
+      if (event.propertyName === 'flex-grow') {
+        pane.state.set(
+          isPaneCollapsed(paneDataArray.get(), layout.get(), pane)
+            ? PaneState.Collapsed
+            : PaneState.Expanded
+        );
+        element.removeEventListener('transitionend', handleTransitionEnd);
+      }
+    };
 
-  const paneSize = layout[paneIndex];
-
-  return {
-    ...paneConstraints,
-    paneSize,
-    pivotIndices
-  };
+    // Always add the listener - if there's no transition, it won't fire
+    element.addEventListener('transitionend', handleTransitionEnd);
+  });
 }

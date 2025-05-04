@@ -6,10 +6,16 @@ import type {
   PaneGroupData,
   PaneConstraints
 } from '../core';
-import { defaultStorage, paneGroupInstances } from '../core';
+import { defaultStorage, paneGroupInstances, PaneState } from '../core';
 
 import { areArraysEqual, areNumbersAlmostEqual } from '../compare';
-import { assert, isHTMLElement } from '../utils';
+import {
+  assert,
+  isHTMLElement,
+  isPaneCollapsed,
+  isPaneExpanded,
+  paneDataHelper
+} from '../utils';
 import { resizePane } from '../resize';
 import {
   loadPaneGroupState,
@@ -72,6 +78,11 @@ export function createGroupHook() {
           paneDataArray
         );
 
+      const unsubFromUpdateIsCollapsed = updateIsCollapsedOnLayoutChange(
+        layout,
+        paneDataArray
+      );
+
       const groupData: PaneGroupData = {
         paneDataArray,
         paneDataArrayChanged,
@@ -84,13 +95,15 @@ export function createGroupHook() {
         autoSave,
         unsubFromPaneDataChange,
         unsubFromLayoutChange,
-        unsubFromUpdateAriaValues
+        unsubFromUpdateAriaValues,
+        unsubFromUpdateIsCollapsed
       };
 
       paneGroupInstances.set(this.el.id, groupData);
     },
 
     destroyed() {
+      paneGroupInstances.get(this.el.id)?.unsubFromUpdateIsCollapsed();
       paneGroupInstances.get(this.el.id)?.unsubFromPaneDataChange();
       paneGroupInstances.get(this.el.id)?.unsubFromLayoutChange();
       paneGroupInstances.get(this.el.id)?.unsubFromUpdateAriaValues();
@@ -163,6 +176,29 @@ function updateLayoutOnPaneDataChange(
     if (areArraysEqual($prevLayout, nextLayout)) return;
 
     layout.set(nextLayout);
+  });
+}
+
+function updateIsCollapsedOnLayoutChange(
+  layout: Writable<number[]>,
+  paneDataArray: Writable<PaneData[]>
+) {
+  return layout.subscribe(changedLayout => {
+    const paneDatas = paneDataArray.get();
+
+    for (let index = 0; index <= paneDatas.length - 1; index++) {
+      const paneData = paneDatas[index];
+      const isCollapsed = isPaneCollapsed(paneDatas, changedLayout, paneData);
+      if (isCollapsed && paneData.state.get() !== PaneState.Collapsing) {
+        paneData.state.set(PaneState.Collapsed);
+        continue;
+      }
+
+      const isExpanded = isPaneExpanded(paneDatas, changedLayout, paneData);
+      if (isExpanded && paneData.state.get() !== PaneState.Expanding) {
+        paneData.state.set(PaneState.Expanded);
+      }
+    }
   });
 }
 

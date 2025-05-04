@@ -164,6 +164,14 @@ defmodule DemoWeb.Layouts do
                       Persistent
                     </.link>
                   </li>
+                  <li>
+                    <.link
+                      href={~p"/states"}
+                      class="-ml-px block border-l pl-4 border-border text-muted-foreground hover:border-primary hover:text-primary"
+                    >
+                      States
+                    </.link>
+                  </li>
                 </div>
               </ul>
             </div>
