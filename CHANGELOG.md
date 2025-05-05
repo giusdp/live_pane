@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.1] (2025-05-05)
+
+- Replace inline style change when resizing by direct cursor style field change [#9](https://github.com/giusdp/live_pane/issues/9).
+
 ## [0.6.0] (2025-05-04)
 
 - Add `data-pane-state` HTML attribute to track collapsed, collapsing, expanded, expanding states.

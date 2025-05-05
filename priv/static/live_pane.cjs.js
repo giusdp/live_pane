@@ -34,8 +34,8 @@ function assert(expectedCondition, message = "Assertion failed!") {
 function safe_not_equal(a, b) {
   return a != a ? b == b : a !== b || a && typeof a === "object" || typeof a === "function";
 }
-function isHTMLElement(element2) {
-  return element2 instanceof HTMLElement;
+function isHTMLElement(element) {
+  return element instanceof HTMLElement;
 }
 function isMouseEvent(event) {
   return event.type.startsWith("mouse");
@@ -581,7 +581,6 @@ function styleToString(style) {
   }, "");
 }
 var currentState = null;
-var element = null;
 function getCursorStyle(state) {
   switch (state) {
     case "horizontal":
@@ -599,22 +598,20 @@ function getCursorStyle(state) {
   }
 }
 function resetGlobalCursorStyle() {
-  if (element === null)
+  if (!currentState)
     return;
-  document.head.removeChild(element);
+  document.documentElement.style.cursor = "";
   currentState = null;
-  element = null;
 }
 function setGlobalCursorStyle(state) {
   if (currentState === state)
     return;
-  currentState = state;
-  const style = getCursorStyle(state);
-  if (element === null) {
-    element = document.createElement("style");
-    document.head.appendChild(element);
+  const root = document.documentElement;
+  if (currentState) {
+    root.style.cursor = "";
   }
-  element.innerHTML = `*{cursor: ${style}!important;}`;
+  root.style.cursor = getCursorStyle(state);
+  currentState = state;
 }
 function computePaneFlexBoxStyle({
   defaultSize,
@@ -1026,10 +1023,10 @@ function expandPane(paneData, groupData) {
     return;
   groupData.layout.set(nextLayout);
 }
-function handleTransition(element2, paneDataArray, layout, pane, transState) {
+function handleTransition(element, paneDataArray, layout, pane, transState) {
   pane.state.set(transState);
   tick().then(() => {
-    const computedStyle = getComputedStyle(element2);
+    const computedStyle = getComputedStyle(element);
     const hasTransition = computedStyle.transitionDuration !== "0s";
     if (!hasTransition) {
       const newState = isPaneCollapsed(paneDataArray.get(), layout.get(), pane) ? "collapsed" /* Collapsed */ : "expanded" /* Expanded */;
@@ -1041,10 +1038,10 @@ function handleTransition(element2, paneDataArray, layout, pane, transState) {
         pane.state.set(
           isPaneCollapsed(paneDataArray.get(), layout.get(), pane) ? "collapsed" /* Collapsed */ : "expanded" /* Expanded */
         );
-        element2.removeEventListener("transitionend", handleTransitionEnd);
+        element.removeEventListener("transitionend", handleTransitionEnd);
       }
     };
-    element2.addEventListener("transitionend", handleTransitionEnd);
+    element.addEventListener("transitionend", handleTransitionEnd);
   });
 }
 
@@ -1364,20 +1361,20 @@ function getResizeHandleElementIndex(groupId, id) {
   return index ?? null;
 }
 function getResizeHandleElement(id) {
-  const element2 = document.querySelector(
+  const element = document.querySelector(
     `[data-pane-resizer][data-pane-resizer-id="${id}"]`
   );
-  if (element2) {
-    return element2;
+  if (element) {
+    return element;
   }
   return null;
 }
 function getPaneGroupElement(id) {
-  const element2 = document.querySelector(
+  const element = document.querySelector(
     `[data-pane-group][data-pane-group-id="${id}"]`
   );
-  if (element2) {
-    return element2;
+  if (element) {
+    return element;
   }
   return null;
 }
