@@ -28,8 +28,6 @@ type CursorState =
 /* Global cursor state */
 let currentState: CursorState | null = null;
 
-/* Global cursor element */
-let element: HTMLStyleElement | null = null;
 
 /**
  * Returns the cursor style for a given cursor state.
@@ -55,12 +53,10 @@ export function getCursorStyle(state: CursorState): string {
  * Resets the global cursor style to the default.
  */
 export function resetGlobalCursorStyle() {
-  if (element === null) return;
+  if (!currentState) return;
 
-  document.head.removeChild(element);
-
+  document.documentElement.style.cursor = '';
   currentState = null;
-  element = null;
 }
 
 /**
@@ -69,16 +65,12 @@ export function resetGlobalCursorStyle() {
 export function setGlobalCursorStyle(state: CursorState) {
   if (currentState === state) return;
 
-  currentState = state;
-
-  const style = getCursorStyle(state);
-
-  if (element === null) {
-    element = document.createElement('style');
-    document.head.appendChild(element);
+  const root = document.documentElement;
+  if (currentState) {
+    root.style.cursor = '';
   }
-
-  element.innerHTML = `*{cursor: ${style}!important;}`;
+  root.style.cursor = getCursorStyle(state);
+  currentState = state;
 }
 
 /**
