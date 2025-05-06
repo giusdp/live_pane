@@ -28,7 +28,6 @@ type CursorState =
 /* Global cursor state */
 let currentState: CursorState | null = null;
 
-
 /**
  * Returns the cursor style for a given cursor state.
  */

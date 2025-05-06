@@ -126,8 +126,13 @@ export function createPaneHook() {
     updated() {
       const groupId = this.el.getAttribute('data-pane-group-id');
       const groupData = paneGroupInstances.get(groupId!);
-      const defaultSize = Number(this.el.getAttribute('default-size')) || undefined;
-      const paneIndex = findPaneDataIndex(groupData!.paneDataArray.get(), this.el.id);
+      const defaultSize =
+        Number(this.el.getAttribute('default-size')) || undefined;
+
+      const paneIndex = findPaneDataIndex(
+        groupData!.paneDataArray.get(),
+        this.el.id
+      );
 
       const style = computePaneFlexBoxStyle({
         defaultSize,
@@ -138,7 +143,6 @@ export function createPaneHook() {
       });
 
       this.el.style.cssText = style;
-
     },
 
     destroyed() {
