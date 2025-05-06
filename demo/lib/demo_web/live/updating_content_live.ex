@@ -8,10 +8,31 @@ defmodule DemoWeb.UpdatingContentLive do
 
   defp card(assigns) do
     ~H"""
-    <div phx-click="toggle_card" phx-value-id={@id} class="w-full">
-      <h2>{@title}</h2>
-      <p :if={@expanded}>{@content}</p>
+    <div
+      phx-click="toggle_card"
+      phx-value-id={@id}
+      class="w-full mx-2 p-2 rounded-lg bg-white border border-gray-300"
+    >
+      <div>
+        <.expander expanded={@expanded} />
+        <span class="text-lg font-medium m-1">{@title}</span>
+      </div>
+      <p :if={@expanded} class="text-sm">{@content}</p>
     </div>
+    """
+  end
+
+  defp expander(assigns) do
+    ~H"""
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class={"h-5 w-5 transition-transform duration-200 #{if @expanded, do: "rotate-180", else: ""} inline-block"}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+    </svg>
     """
   end
 
