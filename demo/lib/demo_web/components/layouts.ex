@@ -172,6 +172,14 @@ defmodule DemoWeb.Layouts do
                       States
                     </.link>
                   </li>
+                  <li>
+                    <.link
+                      href={~p"/updating_content"}
+                      class="-ml-px block border-l pl-4 border-border text-muted-foreground hover:border-primary hover:text-primary"
+                    >
+                      Updating Content
+                    </.link>
+                  </li>
                 </div>
               </ul>
             </div>
