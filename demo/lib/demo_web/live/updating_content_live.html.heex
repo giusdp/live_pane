@@ -3,24 +3,19 @@
     <p class="mb-4 text-sm/6 font-medium capitalize text-accent-foreground"></p>
 
     <h1 class="mb-6 scroll-m-20 text-4xl font-bold tracking-tight">
-      Update content contained within a pane
+      Update Content Contained Within a Pane
     </h1>
 
-    <p class="mt-2 text-balance text-lg text-muted-foreground">
+    <%!-- <p class="mt-2 text-balance text-lg text-muted-foreground">
       An example of how to update the content contained within a pane.
-    </p>
+    </p> --%>
   </header>
 
   <div class="markdown prose relative max-w-3xl pt-4">
     <p class="leading-7 [&amp;:not(:first-child)]:mt-6">
-      The <code>pane</code> component has a <code>content</code> slot
-      that can be used to update the content contained within a pane.
-    </p>
-
-    <p class="mb-10">
-      We send an event to the LiveView when the pane is collapsed or expanded with a payload containing
-      the id so we can identify which pane was collapsed or expanded. We react to this event by updating the
-      button text to the correct action.
+      When updating the content of a pane, LiveView will send the diff to the client
+      causing the pane to update as well. The pane will automatically recalculate
+      its new style (and size) to fit the new content without changing the entire layout of the group.
     </p>
     <LivePane.group
       id="demo_updating_content"
@@ -34,14 +29,6 @@
         starting_size={15}
         group_id="demo_updating_content"
         id="demo_pane_1"
-        class="
-          w-full bg-gray-100 data-[pane-state=collapsing]:bg-red-200 data-[pane-state=collapsed]:bg-red-200
-          data-[pane-state=collapsing]:transition-[flex-grow,background-color] data-[pane-state=collapsing]:duration-1000
-          data-[pane-state=collapsing]:ease-linear data-[pane-state=collapsing]:will-change-[flex-grow,background-color]
-          data-[pane-state=expanding]:bg-gray-100 data-[pane-state=expanding]:transition-[flex-grow,background-color]
-          data-[pane-state=expanding]:duration-1000 data-[pane-state=expanding]:ease-linear
-          data-[pane-state=expanding]:will-change-[flex-grow,background-color]
-        "
       >
         <div class="flex w-full items-center justify-center rounded-lg p-6">
           <span class="font-semibold">
@@ -55,20 +42,7 @@
         group_id="demo_updating_content"
         class="relative flex w-full h-2 items-center justify-center"
       >
-        <div class="z-10 h-7 flex items-center w-4 rounded-sm border bg-brand">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="1em"
-            height="1em"
-            fill="currentColor"
-            viewBox="0 0 256 256"
-            class="size-4 text-black"
-          >
-            <rect width="256" height="256" fill="none"></rect>
-            <path d="M108,60A16,16,0,1,1,92,44,16,16,0,0,1,108,60Zm56,16a16,16,0,1,0-16-16A16,16,0,0,0,164,76ZM92,112a16,16,0,1,0,16,16A16,16,0,0,0,92,112Zm72,0a16,16,0,1,0,16,16A16,16,0,0,0,164,112ZM92,180a16,16,0,1,0,16,16A16,16,0,0,0,92,180Zm72,0a16,16,0,1,0,16,16A16,16,0,0,0,164,180Z">
-            </path>
-          </svg>
-        </div>
+        <div class="z-10 h-3 flex items-center w-7 rounded-lg border bg-brand"></div>
       </LivePane.resizer>
       <LivePane.pane
         starting_size={50}
@@ -89,5 +63,12 @@
         </div>
       </LivePane.pane>
     </LivePane.group>
+
+    <p class="mt-12 mb-2">
+      You can find <.link
+        target="_blank"
+        href="https://github.com/giusdp/live_pane/blob/main/demo/lib/demo_web/live/updating_content_live.html.heex"
+      >the example code here</.link>.
+    </p>
   </div>
 </div>

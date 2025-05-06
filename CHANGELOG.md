@@ -1,6 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [0.6.2] (2025-05-05)
+
+- Pane recalculates styling when updating content within it [#12](https://github.com/giusdp/live_pane/issues/12).
 
 ## [0.6.1] (2025-05-05)
 

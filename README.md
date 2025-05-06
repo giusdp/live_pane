@@ -14,7 +14,7 @@ Add `live_pane` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:live_pane, "~> 0.6.1"}
+    {:live_pane, "~> 0.6.2"}
   ]
 end
 ```
@@ -98,18 +98,3 @@ Now you can use the Group, Pane and Resizer components in your LiveView template
 ```
 
 Just make sure to set an `id` for the group and then use the same id in each pane and resizer for the `group_id` attribute, so they can be linked together.
-## ROADMAP
-
-(not in order)
-
-- [x] Basic 2 pane dragging
-- [x] Support nested groups
-- [x] Vertical orientation
-- [x] Collapsible panes 
-- [x] Keyboard support
-- [x] Touch support
-- [x] Server-side events (collapse/expand)
-- [x] Documentation
-- [x] Persistent layouts
-- [x] Accessibility (aria data)
-- [ ] Support pane collapse/expand transition animations
