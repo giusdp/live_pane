@@ -25,6 +25,7 @@ defmodule DemoWeb.Router do
     live "/collapsible", CollapsibleLive, :collapsible
     live "/conditional", ConditionalLive, :conditional
     live "/states", StatesLive, :states
+    live "/updating_content", UpdatingContentLive, :updating_content
 
     get "/persistent", PageController, :persistent
   end
