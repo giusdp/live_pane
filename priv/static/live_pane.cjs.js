@@ -884,6 +884,23 @@ function createPaneHook() {
         }
       });
     },
+    updated() {
+      const groupId = this.el.getAttribute("data-pane-group-id");
+      const groupData = paneGroupInstances.get(groupId);
+      const defaultSize = Number(this.el.getAttribute("default-size")) || void 0;
+      const paneIndex = findPaneDataIndex(
+        groupData.paneDataArray.get(),
+        this.el.id
+      );
+      const style = computePaneFlexBoxStyle({
+        defaultSize,
+        dragState: dragState.get(),
+        layout: groupData.layout.get(),
+        paneData: groupData.paneDataArray.get(),
+        paneIndex
+      });
+      this.el.style.cssText = style;
+    },
     destroyed() {
       const { groupId, unsubs } = paneInstances.get(this.el.id);
       for (const unsub of unsubs) {
