@@ -9,7 +9,8 @@ defmodule Demo.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      listeners: [Phoenix.CodeReloader]
     ]
   end
 
@@ -26,9 +27,9 @@ defmodule Demo.MixProject do
   defp deps do
     [
       {:live_pane, path: ".."},
-      {:phoenix, "~> 1.7.20"},
+      {:phoenix, "~> 1.8"},
       {:phoenix_html, "~> 4.1"},
-      {:phoenix_live_view, "~> 1.0.0"},
+      {:phoenix_live_view, "~> 1.1.0"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},

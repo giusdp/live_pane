@@ -34,9 +34,8 @@ defmodule LivePane.MixProject do
 
   defp deps do
     [
-      {:phoenix, "~> 1.7.20"},
-      {:phoenix_live_view, "~> 1.0.0"},
-      {:jason, "~> 1.2"},
+      {:phoenix, "~> 1.8"},
+      {:phoenix_live_view, "~> 1.1.0"},
       #
       {:bandit, "~> 1.5", only: :dev},
       {:credo, ">= 0.0.0", only: [:dev], runtime: false},
