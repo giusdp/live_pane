@@ -126,7 +126,7 @@ export function createPaneHook() {
         'resize',
         ({ pane_id, size }: { pane_id: string; size: number }) => {
           if (paneId === pane_id) {
-            resizePaneTo(paneData, groupData, size);
+            resizePaneTo(this.el, paneData, groupData, size);
           }
         }
       );
@@ -338,12 +338,16 @@ function expandPane(paneData: PaneData, groupData: PaneGroupData) {
 }
 
 function resizePaneTo(
+  element: HTMLElement,
   paneData: PaneData,
   groupData: PaneGroupData,
   size: number
 ) {
+  const numericSize = Number(size);
+  if (!Number.isFinite(numericSize)) return;
+
   const { minSize = 0, maxSize = 100 } = paneData.constraints;
-  const clampedSize = Math.min(Math.max(size, minSize), maxSize);
+  const clampedSize = Math.min(Math.max(numericSize, minSize), maxSize);
 
   const prevLayout = groupData.layout.get();
   const paneDataArray = groupData.paneDataArray.get();
@@ -372,6 +376,23 @@ function resizePaneTo(
   });
 
   if (areArraysEqual(prevLayout, nextLayout)) return;
+
+  // Detect if this resize causes a collapsed<->expanded state change
+  const wasCollapsed = isPaneCollapsed(paneDataArray, prevLayout, paneData);
+  const willBeCollapsed = isPaneCollapsed(paneDataArray, nextLayout, paneData);
+
+  if (paneData.constraints.collapsible && wasCollapsed !== willBeCollapsed) {
+    const transState = willBeCollapsed
+      ? PaneState.Collapsing
+      : PaneState.Expanding;
+    handleTransition(
+      element,
+      groupData.paneDataArray,
+      groupData.layout,
+      paneData,
+      transState
+    );
+  }
 
   groupData.layout.set(nextLayout);
 }
