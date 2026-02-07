@@ -121,6 +121,15 @@ export function createPaneHook() {
           expandPane(paneData, groupData);
         }
       });
+
+      this.handleEvent(
+        'resize',
+        ({ pane_id, size }: { pane_id: string; size: number }) => {
+          if (paneId === pane_id) {
+            resizePaneTo(paneData, groupData, size);
+          }
+        }
+      );
     },
 
     updated() {
@@ -314,6 +323,45 @@ function expandPane(paneData: PaneData, groupData: PaneGroupData) {
     findPaneDataIndex(paneDataArray, paneData.id) === paneDataArray.length - 1;
 
   const delta = isLastPane ? paneSize - baseSize : baseSize - paneSize;
+
+  const nextLayout = adjustLayoutByDelta({
+    delta,
+    layout: prevLayout,
+    paneConstraintsArray,
+    pivotIndices,
+    trigger: 'imperative-api'
+  });
+
+  if (areArraysEqual(prevLayout, nextLayout)) return;
+
+  groupData.layout.set(nextLayout);
+}
+
+function resizePaneTo(
+  paneData: PaneData,
+  groupData: PaneGroupData,
+  size: number
+) {
+  const { minSize = 0, maxSize = 100 } = paneData.constraints;
+  const clampedSize = Math.min(Math.max(size, minSize), maxSize);
+
+  const prevLayout = groupData.layout.get();
+  const paneDataArray = groupData.paneDataArray.get();
+
+  const paneConstraintsArray = paneDataArray.map(pd => pd.constraints);
+
+  const { paneSize, pivotIndices } = paneDataHelper(
+    paneDataArray,
+    paneData,
+    prevLayout
+  );
+
+  if (paneSize == null) return;
+
+  const isLastPane =
+    findPaneDataIndex(paneDataArray, paneData.id) === paneDataArray.length - 1;
+
+  const delta = isLastPane ? paneSize - clampedSize : clampedSize - paneSize;
 
   const nextLayout = adjustLayoutByDelta({
     delta,
