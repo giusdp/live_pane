@@ -81,9 +81,10 @@ defmodule LivePane do
       (() => {
         try {
           const id = <%= Phoenix.json_library().encode!(@group_id) %>;
+          const escapedId = (window.CSS && typeof window.CSS.escape === "function") ? window.CSS.escape(id) : id;
           const group = document.getElementById(id);
           if (!group) return;
-          const panes = [...group.querySelectorAll(`[data-pane-group-id='${id}'][data-pane-order][id]:not([data-pane-resizer])`)];
+          const panes = [...group.querySelectorAll(`[data-pane-group-id='${escapedId}'][data-pane-order][id]:not([data-pane-resizer])`)];
           if (!panes.length) return;
           const data = JSON.parse(localStorage.getItem(`livepane:${id}`) || "{}");
           const key = panes.map(p => p.id).sort().join(",");
