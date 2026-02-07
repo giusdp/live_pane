@@ -80,7 +80,7 @@ defmodule LivePane do
       // Restore saved pane layout from localStorage before hooks run to prevent flicker
       (() => {
         try {
-          const id = "<%= @group_id %>";
+          const id = <%= Phoenix.json_library().encode!(@group_id) %>;
           const group = document.getElementById(id);
           if (!group) return;
           const panes = [...group.querySelectorAll(`[data-pane-group-id='${id}'][data-pane-order][id]:not([data-pane-resizer])`)];
