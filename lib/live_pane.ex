@@ -68,7 +68,32 @@ defmodule LivePane do
       {@rest}
     >
       {render_slot(@inner_block)}
+      <.restore_layout_script :if={@auto_save == "true"} group_id={@id} />
     </div>
+    """
+  end
+
+  @doc false
+  defp restore_layout_script(assigns) do
+    ~H"""
+    <script data-live-pane-restore>
+      // Restore saved pane layout from localStorage before hooks run to prevent flicker
+      (() => {
+        try {
+          const id = "<%= @group_id %>";
+          const group = document.getElementById(id);
+          if (!group) return;
+          const panes = [...group.querySelectorAll(`[data-pane-group-id='${id}'][data-pane-order][id]:not([data-pane-resizer])`)];
+          if (!panes.length) return;
+          const data = JSON.parse(localStorage.getItem(`livepane:${id}`) || "{}");
+          const key = panes.map(p => p.id).sort().join(",");
+          const state = data[key];
+          if (!state?.layout || state.layout.length !== panes.length) return;
+          panes.sort((a, b) => (parseInt(a.dataset.paneOrder) || 0) - (parseInt(b.dataset.paneOrder) || 0));
+          panes.forEach((pane, i) => Object.assign(pane.style, { flexGrow: state.layout[i], flexBasis: "0", flexShrink: "1", overflow: "hidden" }));
+        } catch {}
+      })();
+    </script>
     """
   end
 
