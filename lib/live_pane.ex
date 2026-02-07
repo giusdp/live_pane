@@ -86,9 +86,11 @@ defmodule LivePane do
           if (!group) return;
           const panes = [...group.querySelectorAll(`[data-pane-group-id='${escapedId}'][data-pane-order][id]:not([data-pane-resizer])`)];
           if (!panes.length) return;
-          const data = JSON.parse(localStorage.getItem(`livepane:${id}`) || "{}");
-          const key = panes.map(p => p.id).sort().join(",");
-          const state = data[key];
+          // NOTE: Storage key format must match storage.ts getPaneGroupKey/getPaneKey
+          const storageKey = `livepane:${id}`;
+          const paneKey = panes.map(p => p.id).sort().join(",");
+          const data = JSON.parse(localStorage.getItem(storageKey) || "{}");
+          const state = data[paneKey];
           if (!state?.layout || state.layout.length !== panes.length) return;
           panes.sort((a, b) => (parseInt(a.dataset.paneOrder) || 0) - (parseInt(b.dataset.paneOrder) || 0));
           panes.forEach((pane, i) => Object.assign(pane.style, { flexGrow: state.layout[i], flexBasis: "0", flexShrink: "1", overflow: "hidden" }));
