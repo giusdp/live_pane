@@ -150,6 +150,14 @@ defmodule DemoWeb.Layouts do
                   </li>
                   <li>
                     <.link
+                      href={~p"/resize"}
+                      class="-ml-px block border-l pl-4 border-border text-muted-foreground hover:border-primary hover:text-primary"
+                    >
+                      Resize
+                    </.link>
+                  </li>
+                  <li>
+                    <.link
                       href={~p"/conditional"}
                       class="-ml-px block border-l pl-4 border-border text-muted-foreground hover:border-primary hover:text-primary"
                     >

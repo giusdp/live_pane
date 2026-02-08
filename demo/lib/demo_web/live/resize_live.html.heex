@@ -1,0 +1,100 @@
+<div class="mx-auto w-full min-w-0 max-w-3xl pt-8">
+  <header class="prose relative mb-4 max-w-3xl border-b border-border pb-8">
+    <h1 class="mb-6 scroll-m-20 text-4xl font-bold tracking-tight">Imperative Resize</h1>
+    <p class="mt-2 text-balance text-lg text-muted-foreground">
+      Programmatically resize panes from the server using the <code>resize</code> event.
+    </p>
+  </header>
+
+  <div class="markdown prose relative max-w-3xl pt-4">
+    <p>
+      Push a <code>resize</code>
+      event with <code>pane_id</code>
+      and <code>size</code>
+      to resize a pane.
+      The size is clamped to respect <code>min_size</code>
+      and <code>max_size</code>
+      constraints.
+    </p>
+
+    <form phx-change="update_size" class="flex items-center gap-3 my-6">
+      <input
+        type="range"
+        min="10"
+        max="90"
+        value={@size}
+        name="size"
+        class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+      />
+      <span class="w-12 text-right font-mono">{@size}%</span>
+      <button
+        type="button"
+        class="inline-flex items-center justify-center whitespace-nowrap rounded-md
+              text-sm font-medium border transition-colors shadow-sm h-9 px-4
+              !bg-zinc-50 !border-zinc-200/50 !text-brand hover:!bg-zinc-100"
+        phx-click="apply_size"
+      >
+        Apply
+      </button>
+    </form>
+
+    <LivePane.group id="resize_demo" class="h-[450px] border-2 border-gray-300 rounded-lg">
+      <LivePane.pane
+        min_size={10}
+        max_size={90}
+        starting_size={50}
+        group_id="resize_demo"
+        id="resize_pane_1"
+        class="h-full"
+      >
+        <div class="flex h-full items-center justify-center rounded-lg bg-gray-100 p-6">
+          <span class="font-semibold">Resizable Pane</span>
+        </div>
+      </LivePane.pane>
+
+      <LivePane.resizer
+        id="resize_demo-resizer"
+        group_id="resize_demo"
+        class="relative flex h-full w-2 items-center justify-center"
+      >
+        <div class="z-10 h-7 flex items-center w-4 rounded-sm border bg-brand">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="1em"
+            height="1em"
+            fill="currentColor"
+            viewBox="0 0 256 256"
+            class="size-4 text-black"
+          >
+            <rect width="256" height="256" fill="none"></rect>
+            <path d="M108,60A16,16,0,1,1,92,44,16,16,0,0,1,108,60Zm56,16a16,16,0,1,0-16-16A16,16,0,0,0,164,76ZM92,112a16,16,0,1,0,16,16A16,16,0,0,0,92,112Zm72,0a16,16,0,1,0,16,16A16,16,0,0,0,164,112ZM92,180a16,16,0,1,0,16,16A16,16,0,0,0,92,180Zm72,0a16,16,0,1,0,16,16A16,16,0,0,0,164,180Z">
+            </path>
+          </svg>
+        </div>
+      </LivePane.resizer>
+      <LivePane.pane starting_size={50} group_id="resize_demo" id="resize_pane_2" class="h-full">
+        <div class="flex h-full items-center justify-center rounded-lg bg-gray-100 p-6">
+          <span class="font-semibold">Other Pane</span>
+        </div>
+      </LivePane.pane>
+    </LivePane.group>
+
+    <h2 class="mt-12 scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0">Usage</h2>
+
+    <div id="anatomy" phx-hook="Highlight" phx-update="ignore" class="bg-inherit">
+      <pre class="p-0 bg-inherit">
+          <code class="language-elixir p-0" id="code">
+          <%="""
+          def handle_event(\"resize_pane\", _, socket) do
+            socket = push_event(socket, \"resize\", %{
+              pane_id: \"my_pane_id\",
+              size: 30
+            })
+            {:noreply, socket}
+          end
+          """%>
+</code>
+</pre>
+    </div>
+  </div>
+</div>

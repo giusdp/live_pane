@@ -14,6 +14,30 @@ defmodule LivePane do
           <div>Pane 2</div>
         </LivePane.pane>
       </LivePane.group>
+
+  ## Server-side Events
+
+  Pane hooks listen to the following events that can be pushed from the server:
+
+  ### collapse
+
+  Collapses a collapsible pane to its `collapsed_size`.
+
+      push_event(socket, "collapse", %{pane_id: "my_pane_id"})
+
+  ### expand
+
+  Expands a collapsed pane to its previous size (or `min_size` if no previous size).
+
+      push_event(socket, "expand", %{pane_id: "my_pane_id"})
+
+  ### resize
+
+  Resizes a pane to a specific size (as a percentage of the group).
+
+      push_event(socket, "resize", %{pane_id: "my_pane_id", size: 30})
+
+  The size will be automatically clamped to respect the pane's `min_size` and `max_size` constraints.
   """
   use Phoenix.Component
 
