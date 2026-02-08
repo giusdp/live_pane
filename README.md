@@ -14,7 +14,7 @@ Add `live_pane` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:live_pane, "~> 0.6.3"}
+    {:live_pane, "~> 0.6.5"}
   ]
 end
 ```

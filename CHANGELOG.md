@@ -1,8 +1,20 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-## [0.6.2] (2025-05-05)
 
+## [0.6.5]
+
+- Add imperative `resize` event to resize panes from the server [#17](https://github.com/giusdp/live_pane/pull/17).
+
+## [0.6.4] (2025-08-10)
+
+- Update Phoenix and LiveView dependencies to latest (1.8, 1.1).
+
+## [0.6.3] (2025-06-22)
+
+- Actually release fix for [#12](https://github.com/giusdp/live_pane/issues/12).
+
+## [0.6.2] (2025-05-05)
 - Pane recalculates styling when updating content within it [#12](https://github.com/giusdp/live_pane/issues/12).
 
 ## [0.6.1] (2025-05-05)
