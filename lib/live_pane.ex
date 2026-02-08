@@ -80,7 +80,7 @@ defmodule LivePane do
       // Restore saved pane layout from localStorage before hooks run to prevent flicker
       (() => {
         try {
-          const id = <%= Phoenix.json_library().encode!(@group_id) %>;
+          const id = "<%= @group_id %>";
           const escapedId = (window.CSS && typeof window.CSS.escape === "function") ? window.CSS.escape(id) : id;
           const group = document.getElementById(id);
           if (!group) return;
